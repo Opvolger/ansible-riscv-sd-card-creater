@@ -1,0 +1,4 @@
+fedora:
+  # temp dir for downloading rootfs raw.zst
+  target: "/home/opvolger/tmp/fedora"
+  download: https://dl.fedoraproject.org/pub/alt/risc-v/testing/f41/cloud/Fedora.riscv64-41.raw.zst

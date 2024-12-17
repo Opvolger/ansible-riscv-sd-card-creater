@@ -1,0 +1,141 @@
+- name: Creates directory
+  ansible.builtin.file:
+    path: "{{ fedora.target }}{{ item }}"
+    state: directory
+  with_items: 
+   - ""
+   - "/mnt"
+
+- name: Set fact for {{ fedora.download | basename  | replace('.zst','') }}
+  block:
+  - set_fact:
+      fedora_unpacked_file: "{{ fedora.target }}/{{ fedora.download | basename  | replace('.zst','') }}"
+
+- name: Get stats of Fedora 41 decompress file {{ fedora.download | basename  | replace('.zst','') }}
+  stat:
+    path: "{{ fedora_unpacked_file }}"
+  register: fedorafiledecompress
+
+- name: Get Fedora 41 rootfs raw.zst
+  block:
+    - name: Get stats of Fedora 41 rootfs file
+      stat:
+        path: "{{ fedora.target }}/{{ fedora.download | basename }}"
+      register: fedorafile
+
+    - name: download {{ fedora.download | basename }}
+      get_url:
+        url: "{{ fedora.download }}"
+        dest: "{{ fedora.target }}/{{ fedora.download | basename }}"
+      when: not fedorafile.stat.exists
+
+    - name: decompress {{ fedora.download | basename }}
+      shell: "unzstd {{ fedora.target }}/{{ fedora.download | basename }}"
+  when: not fedorafiledecompress.stat.exists
+
+- name: Creates mount directory
+  ansible.builtin.file:
+    path: "{{ fedora.target }}/mnt"
+    state: directory
+
+- name: Read device information "{{ target }}"
+  become: true
+  become_user: root
+  community.general.parted: 
+    device: "{{ target }}"
+    unit: MiB
+  register: disk_info
+
+- name: Create new partition for rootfs
+  block:
+    - name: Create new partition for rootfs
+      become: true
+      become_user: root
+      community.general.parted:
+        device: "{{ target }}"
+        name: p.lxroot
+        label: gpt
+        number: "{{ disk_info.partitions | length + 1 }}"
+        part_start: "{{ disk_info.partitions[-1].end }}MiB"
+        part_end: "100%"
+        state: present
+  when: not disk_info.partitions[-1].name == 'p.lxroot'
+
+- name: Read device information "{{ target }}"
+  become: true
+  become_user: root
+  community.general.parted: 
+    device: "{{ target }}"
+    unit: MiB
+  register: disk_info
+
+- name: Mount block and loop
+  block:
+  - name: Find already setup lo device
+    become: true
+    become_user: root
+    shell: "losetup -l | grep {{ fedora.download | basename }} | awk '{print $1}'"
+    register: loopback
+
+  - name: Setup lo device
+    become: true
+    become_user: root
+    shell: "losetup --partscan --find --show {{ fedora_unpacked_file }}"
+    register: loopback
+    when: '"/dev/loop" not in loopback.stdout' 
+
+  - name: "dd if={{ loopback.stdout }}p3 of={{ target }}{{ disk_info.partitions[-1].num }} bs=32M status=progress"
+    become: true
+    become_user: root
+    shell: "dd if={{ loopback.stdout }}p3 of={{ target }}{{ disk_info.partitions[-1].num }} bs=32M status=progress"
+
+  - name: Extend an {{ target }}{{ disk_info.partitions[-1].num }} partition to fill all available space
+    become: true
+    become_user: root
+    community.general.parted:
+      device: "{{ target }}"
+      name: p.lxroot
+      number: "{{ disk_info.partitions[-1].num }}"
+      label: gpt
+      part_end: "100%"
+      resize: true
+      state: present
+
+  - name: Mount "{{ target }}{{ disk_info.partitions[-1].num }}"
+    become: true
+    become_user: root
+    ansible.posix.mount:
+      path: "{{ fedora.target }}/mnt"
+      src: "{{ target }}{{ disk_info.partitions[-1].num }}"
+      fstype: btrfs
+      state: ephemeral
+
+  # we don't have the /boot and /boot/efi partition
+  - name: Remove mount point /boot/efi nad /boot in fstab
+    become: true
+    become_user: root
+    lineinfile:
+      path: "{{ fedora.target }}/mnt/root/etc/fstab"
+      state: absent
+      regexp: 'boot'
+
+  - name: change cloud.cfg (add passwords + disabled cloud-init)
+    become: true
+    become_user: root
+    ansible.builtin.lineinfile:
+      path: "{{ fedora.target }}/mnt/root/etc/cloud/cloud.cfg"
+      line: "chpasswd:\n  list: |\n    root:linux\n    fedora:fedora_rocks!\n  expire: False\n  \nruncmd:\n  - touch /etc/cloud/cloud-init.disabled"
+
+  always:
+
+  - name: Unmount "{{ fedora.target }}/mnt"
+    become: true
+    become_user: root
+    ansible.posix.mount:
+      path: "{{ fedora.target }}/mnt"
+      state: unmounted
+
+  - name: Remove loop device
+    become: true
+    become_user: root
+    shell: "sudo losetup -d $(losetup -l | grep {{ fedora_unpacked_file | basename }} | awk '{print $1}')"

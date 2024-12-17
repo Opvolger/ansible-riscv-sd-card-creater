@@ -86,6 +86,39 @@ Delete only last partition of the SD-card and run one of the other playbook:
 
 After creating the SD-Card, boot the device and do the next steps
 
+### Fedora
+
+Login with user `fedora` and password `fedora_rocks!`. Yes NOT with `riscv`, that user will NOT work!.
+
+```bash
+sudo -i
+# check for desktops
+dnf4 group list -v --available | grep desktop
+   KDE Plasma Workspaces (kde-desktop-environment)
+   Xfce Desktop (xfce-desktop-environment)
+   Phosh Desktop (phosh-desktop-environment)
+   LXDE Desktop (lxde-desktop-environment)
+   LXQt Desktop (lxqt-desktop-environment)
+   Cinnamon Desktop (cinnamon-desktop-environment)
+   MATE Desktop (mate-desktop-environment)
+   Sugar Desktop Environment (sugar-desktop-environment)
+   Deepin Desktop (deepin-desktop-environment)
+   Budgie Desktop (budgie-desktop-environment)
+   Basic Desktop (basic-desktop-environment)
+   i3 desktop (i3-desktop-environment)
+   Sway Desktop (sway-desktop-environment)
+   Budgie (budgie-desktop)
+   Budgie Desktop Applications (budgie-desktop-apps)
+   Desktop accessibility (desktop-accessibility)
+# KDE/LXQt is not working when i was making this document (problem with libQt6Core.so.6 / libQt6Gui.so.6)
+# XORG libs where not in repo when i was making this document
+# So I installed GNOME
+dnf install @workstation-product-environment --skip-broken
+reboot
+```
+
+We will see the Desktop!
+
 ### Ubuntu
 
 First login: ubuntu/ubuntu

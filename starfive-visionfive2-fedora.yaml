@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  vars:
+    kernel: "{{ starfive_visionfive2_kernel }}"
+    on_boot:
+      boot:
+        device: "mmc 1"
+        partition: 3
+        # bootargs: root=/dev/mmcblk1p4 rw rootflags=subvol=root cloud-config-url=http://192.168.2.23:8080/user-data.yaml console=tty0 console=ttyS0,115200 earlycon rootwait stmmaceth=chain_mode:1 selinux=0
+        bootargs: root=/dev/mmcblk1p4 rw rootflags=subvol=root console=tty0 console=ttyS0,115200 earlycon rootwait stmmaceth=chain_mode:1 selinux=0
+      rootfs_location: "/dev/mmcblk1p4"
+  tasks:
+    - include_tasks: tasks/create-fedora-partition.yaml
+    - include_tasks: tasks/create-and-copy-boot-src-to-boot-partition.yaml
