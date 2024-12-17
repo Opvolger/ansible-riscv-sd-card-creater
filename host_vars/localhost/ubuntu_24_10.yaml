@@ -1,0 +1,4 @@
+ubuntu2410:
+  # temp dir for downloading the img and extract it.
+  target: "/home/opvolger/tmp/ubuntu"
+  download: https://cdimage.ubuntu.com/releases/24.10/release/ubuntu-24.10-preinstalled-server-riscv64.img.xz
