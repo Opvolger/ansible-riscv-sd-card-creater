@@ -5,7 +5,7 @@
 
 - name: Get set kernel directory
   set_fact: 
-    kernel_dir: "{{ kernel.target }}/source/linux-{{ kernel.version }}"
+    kernel_dir: '{{ kernel.target }}/source/{{ kernel.git.folder }}'
   when: kernel.git is defined
 
 - name: Creates mount directory
