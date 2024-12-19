@@ -6,9 +6,14 @@
    - ""
    - "/mnt"
 
+- name: Set fact for {{ ubuntu2410.download | basename  | replace('.xz','') }}
+  block:
+  - set_fact:
+      ubuntu2410_unpacked_file: "{{ ubuntu2410.target }}/{{ ubuntu2410.download | basename  | replace('.xz','') }}"
+
 - name: Get stats of Ubuntu 20.10 decompress file {{ ubuntu2410.download | basename  | replace('.xz','') }}
   stat:
-    path: "{{ ubuntu2410.target }}/{{ ubuntu2410.download | basename  | replace('.xz','') }}"
+    path: "{{ ubuntu2410_unpacked_file }}"
   register: ubuntu2410filedecompress
 
 - name: Get Ubuntu 20.10 rootfs tar.xz
@@ -65,18 +70,11 @@
 
 - name: Mount block and loop
   block:
-  - name: Find already setup lo device
-    become: true
-    become_user: root
-    shell: "losetup -l | grep {{ ubuntu2410.download | basename }} | awk '{print $1}'"
-    register: loopback
-
   - name: Setup lo device
     become: true
     become_user: root
-    shell: "losetup --partscan --find --show {{ ubuntu2410.target }}/{{ ubuntu2410.download | basename | replace('.xz','') }}"
+    shell: "losetup --partscan --find --show {{ ubuntu2410_unpacked_file }}"
     register: loopback
-    when: '"/dev/loop" not in loopback.stdout' 
 
   - name: "dd if={{ loopback.stdout }}p1 of={{ target }}{{ disk_info.partitions[-1].num }} bs=32M status=progress"
     become: true
@@ -124,4 +122,4 @@
   - name: Remove loop device
     become: true
     become_user: root
-    shell: "sudo losetup -d $(losetup -l | grep {{ ubuntu2410.download | basename | replace('.xz','') }} | awk '{print $1}')"
+    shell: "sudo losetup -d $(losetup -l | grep {{ ubuntu2410_unpacked_file | basename }} | awk '{print $1}')"
