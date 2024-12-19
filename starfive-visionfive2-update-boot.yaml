@@ -4,7 +4,6 @@
 
 - hosts: localhost
   vars:
-    build_jobs: 16
     opensbi: "{{ starfive_visionfive2_opensbi }}"
     u_boot: "{{ starfive_visionfive2_u_boot }}"
     kernel: "{{ starfive_visionfive2_kernel }}"

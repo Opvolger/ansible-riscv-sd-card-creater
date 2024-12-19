@@ -60,18 +60,18 @@
 
 - name: When git location
   block:
+  - name: Get set kernel directory
+    set_fact: 
+      kernel_dir: '{{ kernel.target }}/source/{{ kernel.git.folder }}'
+
   - name: Git checkout kernel
     ansible.builtin.git:
       repo: '{{ kernel.git.repo }}'
-      dest: '{{ kernel.git.checkout_dir }}'
+      dest: '{{ kernel_dir }}'
+      depth: 1
       force: true
       version: '{{ kernel.git.version }}'
-    when: '{{ kernel.git.checkout }}'
-
-  - name: Get set kernel directory
-    set_fact: 
-      kernel_dir: "{{ kernel.git.checkout_dir }}"
-
+    when: kernel.git.checkout
   when: kernel.git is defined
 
 - name: Get stats of defconfig_backup

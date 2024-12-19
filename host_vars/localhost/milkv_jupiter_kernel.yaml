@@ -3,7 +3,7 @@ milkv_jupiter_kernel:
     # use own copy, the real repo is VERY slow!
     repo: "https://github.com/Opvolger/spacemit-k1-linux-6.6.git"
     version: "bl-v2.0.y"
-    checkout_dir: "/home/opvolger/bianbu-kernel/source/spacemit-k1-linux-6.6"
+    folder: "spacemit-k1-linux-6.6"
     checkout: false # set te true for clean checkout
   extra_firmware_download:
     - https://gitee.com/bianbu-linux/buildroot-ext/blob/bl-v2.0.y/board/spacemit/k1/target_overlay/lib/firmware/esos.elf

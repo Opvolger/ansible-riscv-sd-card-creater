@@ -1,1 +1,2 @@
+build_jobs: 16
 target: /dev/sdb

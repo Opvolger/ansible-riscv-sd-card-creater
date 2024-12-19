@@ -1,7 +1,6 @@
 ---
 - hosts: localhost
   vars:
-    build_jobs: 16
     on_boot:
       boot:
         device: "mmc 0"
