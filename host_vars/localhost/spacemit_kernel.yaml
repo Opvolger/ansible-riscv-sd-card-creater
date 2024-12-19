@@ -19,6 +19,14 @@ spacemit_kernel:
   add_to_config:
     # disable signing check
     CONFIG_MODULE_SIG_KEY: ""
+
+    # disable wifi (no firmwares)
+    # platform regulatory.0: Direct firmware load for regulatory.db failed with error -2
+    CONFIG_WLAN: n
+    CONFIG_WIRELESS: n
+
+    # disable REMOTEPROC (give error)
+    CONFIG_REMOTEPROC: n
     
     # disable onboard DRM/GPU
     CONFIG_DRM_SPACEMIT: n
@@ -107,3 +115,4 @@ spacemit_kernel:
     CONFIG_BLK_DEV_RAM: y
     CONFIG_BLK_DEV_RAM_COUNT: 16
     CONFIG_BLK_DEV_RAM_SIZE: 4096
+    CONFIG_BTRFS_FS: y
