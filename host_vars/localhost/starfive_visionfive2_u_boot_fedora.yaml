@@ -1,4 +1,4 @@
-starfive_visionfive2_u_boot_fedora:
+starfive_visionfive2_u_boot_fedora_41:
   git:
     repo: "https://github.com/u-boot/u-boot.git"
     version: "v2024.10"    

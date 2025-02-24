@@ -1,0 +1,14 @@
+- name: Creates directory
+  ansible.builtin.file:
+    path: /tmp/release/{{release_dir}}/
+    state: directory
+
+- name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: "{{ u_boot.git.checkout_dir }}/spl/u-boot-spl.bin.normal.out"
+    dest: /tmp/release/{{release_dir}}/u-boot-spl.bin.normal.out
+
+- name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: "{{ u_boot.git.checkout_dir }}/u-boot.itb"
+    dest: /tmp/release/{{release_dir}}/u-boot.itb

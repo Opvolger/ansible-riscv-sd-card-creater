@@ -1,0 +1,9 @@
+---
+- ansible.builtin.import_playbook: starfive-visionfive2-create-boot-compile-ubuntu-24-10.yaml
+
+- hosts: localhost
+  vars:
+    u_boot: "{{ starfive_visionfive2_u_boot_ubuntu_24_10 }}"
+  tasks:
+    - include_tasks: tasks/clear-and-create-boot-partitions.yaml
+    - include_tasks: tasks/jh7110-write-to-boot-partitions.yaml
