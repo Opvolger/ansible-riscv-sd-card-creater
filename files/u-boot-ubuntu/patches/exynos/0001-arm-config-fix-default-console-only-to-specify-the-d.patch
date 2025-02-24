@@ -1,0 +1,152 @@
+From 82987dbf64ab031482eee52267e2fb1edce52531 Mon Sep 17 00:00:00 2001
+From: Dongjin Kim <tobetter@gmail.com>
+Date: Sat, 28 Oct 2017 00:22:27 -0400
+Subject: [PATCH] arm: config: fix default console only to specify the device
+
+This reverts commit 767edf0f6b3eaa0303f3fd6afdc14ddce0aca70c and restores
+commit 232ed3ca534708527a9515c7c41bc3542949525c.
+
+Debian's flash-kernel expect the console variable to just contain the device,
+because it will set the bootargs to "console=${console}". So revert adding
+"console=" to the console parameter, but also adjust the shipped bootscripts
+for exynos boards to cope with it.
+
+Bug-Debian: https://bugs.debian.org/920116
+Signed-off-by: Benjamin Drung <bdrung@debian.org>
+---
+ board/samsung/common/bootscripts/autoboot.cmd | 2 +-
+ board/samsung/common/bootscripts/bootzimg.cmd | 4 ++--
+ board/samsung/common/dfu_sample_env.txt       | 4 ++--
+ include/configs/odroid.h                      | 4 ++--
+ include/configs/odroid_xu3.h                  | 4 ++--
+ include/configs/s5p_goni.h                    | 4 ++--
+ include/configs/s5pc210_universal.h           | 4 ++--
+ include/configs/trats.h                       | 4 ++--
+ include/configs/trats2.h                      | 4 ++--
+ 9 files changed, 17 insertions(+), 17 deletions(-)
+
+Index: u-boot/board/samsung/common/bootscripts/autoboot.cmd
+===================================================================
+--- u-boot.orig/board/samsung/common/bootscripts/autoboot.cmd
++++ u-boot/board/samsung/common/bootscripts/autoboot.cmd
+@@ -12,7 +12,7 @@ setenv initrdaddr  "42000000"
+ setenv loaddtb     "load mmc ${mmcbootdev}:${mmcbootpart} ${fdtaddr} ${fdtfile}"
+ setenv loadinitrd  "load mmc ${mmcbootdev}:${mmcbootpart} ${initrdaddr} ${initrdname}"
+ setenv loadkernel  "load mmc ${mmcbootdev}:${mmcbootpart} '${kerneladdr}' '${kernelname}'"
+-setenv kernel_args "setenv bootargs ${console} root=/dev/mmcblk${mmcrootdev}p${mmcrootpart} rootfstype=${rootfstype} rootwait ${opts}"
++setenv kernel_args "setenv bootargs console=${console} root=/dev/mmcblk${mmcrootdev}p${mmcrootpart} rootfstype=${rootfstype} rootwait ${opts}"
+ 
+ #### Routine: check_dtb - check that target.dtb exists on boot partition
+ setenv check_dtb "
+Index: u-boot/board/samsung/common/bootscripts/bootzimg.cmd
+===================================================================
+--- u-boot.orig/board/samsung/common/bootscripts/bootzimg.cmd
++++ u-boot/board/samsung/common/bootscripts/bootzimg.cmd
+@@ -1,5 +1,5 @@
+ setenv kernelname zImage;
+-setenv boot_kernel "setenv bootargs \"${console} root=/dev/mmcblk${mmcrootdev}p${mmcrootpart} rootfstype=${rootfstype} rootwait ${opts}\";
++setenv boot_kernel "setenv bootargs \"console=${console} root=/dev/mmcblk${mmcrootdev}p${mmcrootpart} rootfstype=${rootfstype} rootwait ${opts}\";
+ load mmc ${mmcbootdev}:${mmcbootpart} 0x40007FC0 '${kernelname}';
+ if load mmc ${mmcbootdev}:${mmcbootpart} 40800000 ${fdtfile}; then
+ 	bootz 0x40007FC0 - 40800000;
+@@ -7,4 +7,4 @@ else
+ 	echo Warning! Booting without DTB: '${fdtfile}'!;
+ 	bootz 0x40007FC0 -;
+ fi;"
+-run boot_kernel;
+\ No newline at end of file
++run boot_kernel;
+Index: u-boot/board/samsung/common/dfu_sample_env.txt
+===================================================================
+--- u-boot.orig/board/samsung/common/dfu_sample_env.txt
++++ u-boot/board/samsung/common/dfu_sample_env.txt
+@@ -1,9 +1,9 @@
+-mmcboot=setenv bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} ${rootfstype} rootwait ${console}; run loaduimage; bootm 0x40007FC0
++mmcboot=setenv bootargs root=/dev/mmcblk${mmcdev}p${mmcrootpart} ${rootfstype} rootwait console=${console}; run loaduimage; bootm 0x40007FC0
+ rootfstype=ext4
+ loaduimage=ext4load mmc ${mmcdev}:${mmcbootpart} 0x40007FC0 uImage
+ mmcdev=0
+ mmcbootpart=2
+ mmcrootpart=5
+-console=console=ttySAC2,115200n8
++console=ttySAC2,115200n8
+ bootcmd=run mmcboot
+ dfu_alt_info=u-boot mmc 80 800;params.bin mmc 0x38 0x8;uImage ext4 0 2
+Index: u-boot/include/configs/odroid.h
+===================================================================
+--- u-boot.orig/include/configs/odroid.h
++++ u-boot/include/configs/odroid.h
+@@ -128,7 +128,7 @@
+ 		"elif test -e mmc ${mmcbootdev} uImage; then; " \
+ 			"run boot_uimg;" \
+ 		"fi;\0" \
+-	"console=console=ttySAC1,115200n8\0" \
++	"console=ttySAC1,115200n8\0" \
+ 	"mmcbootdev=0\0" \
+ 	"mmcbootpart=1\0" \
+ 	"mmcrootdev=0\0" \
+Index: u-boot/include/configs/odroid_xu3.h
+===================================================================
+--- u-boot.orig/include/configs/odroid_xu3.h
++++ u-boot/include/configs/odroid_xu3.h
+@@ -76,7 +76,7 @@
+ 	MEM_LAYOUT_ENV_SETTINGS \
+ 	BOOTENV \
+ 	"rootfstype=ext4\0" \
+-	"console=console=ttySAC2,115200n8\0" \
++	"console=ttySAC2,115200n8\0" \
+ 	"fdtfile=exynos5422-odroidxu3.dtb\0" \
+ 	"board=odroid\0" \
+ 	"board_name=odroidxu3\0" \
+Index: u-boot/include/configs/s5p_goni.h
+===================================================================
+--- u-boot.orig/include/configs/s5p_goni.h
++++ u-boot/include/configs/s5p_goni.h
+@@ -100,7 +100,7 @@
+ 	"bootchart=set opts init=/sbin/bootchartd; run bootcmd\0" \
+ 	"verify=n\0" \
+ 	"rootfstype=ext4\0" \
+-	"console=console=ttySAC2,115200n8\0" \
++	"console=ttySAC2,115200n8\0" \
+ 	"meminfo=mem=80M mem=256M@0x40000000 mem=128M@0x50000000\0" \
+ 	"loaduimage=ext4load mmc ${mmcdev}:${mmcbootpart} 0x30007FC0 uImage\0" \
+ 	"mmcdev=0\0" \
+Index: u-boot/include/configs/s5pc210_universal.h
+===================================================================
+--- u-boot.orig/include/configs/s5pc210_universal.h
++++ u-boot/include/configs/s5pc210_universal.h
+@@ -74,7 +74,7 @@
+ 	"mmcoops=mmc read 0 0x40000000 0x40 8; md 0x40000000 0x400\0" \
+ 	"verify=n\0" \
+ 	"rootfstype=ext4\0" \
+-	"console=console=ttySAC1,115200n8\0" \
++	"console=ttySAC1,115200n8\0" \
+ 	"mbrparts=" MBRPARTS_DEFAULT \
+ 	"meminfo=crashkernel=32M@0x50000000\0" \
+ 	"nfsroot=/nfsroot/arm\0" \
+Index: u-boot/include/configs/trats.h
+===================================================================
+--- u-boot.orig/include/configs/trats.h
++++ u-boot/include/configs/trats.h
+@@ -87,7 +87,7 @@
+ 	"mmcoops=mmc read 0 0x40000000 0x40 8; md 0x40000000 0x400\0" \
+ 	"verify=n\0" \
+ 	"rootfstype=ext4\0" \
+-	"console=console=ttySAC2,115200n8\0" \
++	"console=ttySAC2,115200n8\0" \
+ 	"meminfo=crashkernel=32M@0x50000000\0" \
+ 	"nfsroot=/nfsroot/arm\0" \
+ 	"bootblock=10\0" \
+Index: u-boot/include/configs/trats2.h
+===================================================================
+--- u-boot.orig/include/configs/trats2.h
++++ u-boot/include/configs/trats2.h
+@@ -76,7 +76,7 @@
+ 	"boottrace=setenv opts initcall_debug; run bootcmd\0" \
+ 	"verify=n\0" \
+ 	"rootfstype=ext4\0" \
+-	"console=console=ttySAC2,115200n8\0" \
++	"console=ttySAC2,115200n8\0" \
+ 	"kernelname=uImage\0" \
+ 	"loaduimage=ext4load mmc ${mmcdev}:${mmcbootpart} 0x40007FC0 " \
+ 		"${kernelname}\0" \

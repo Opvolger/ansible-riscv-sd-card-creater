@@ -1,0 +1,56 @@
+From 047cff7813d29a1f0416f4e964358d324a1af251 Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Sun, 3 Mar 2024 14:01:18 +0100
+Subject: [PATCH 1/5] eeprom: starfive: function get_product_id_from_eeprom()
+
+Export a function get_product_id_from_eeprom() to read the product ID.
+This value can be used for fixing up the device-tree on JH7110 based
+products.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Origin: upstream, https://lore.kernel.org/u-boot/20240303130122.29983-2-heinrich.schuchardt@canonical.com/
+---
+ arch/riscv/include/asm/arch-jh7110/eeprom.h         | 9 +++++++++
+ board/starfive/visionfive2/visionfive2-i2c-eeprom.c | 8 ++++++++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/arch/riscv/include/asm/arch-jh7110/eeprom.h b/arch/riscv/include/asm/arch-jh7110/eeprom.h
+index d2776d5b6cb..62d184aeb57 100644
+--- a/arch/riscv/include/asm/arch-jh7110/eeprom.h
++++ b/arch/riscv/include/asm/arch-jh7110/eeprom.h
+@@ -12,4 +12,13 @@
+ u8 get_pcb_revision_from_eeprom(void);
+ u32 get_ddr_size_from_eeprom(void);
+ 
++/**
++ * get_product_id_from_eeprom - get product ID string
++ *
++ * A string like "VF7110A1-2228-D008E000-00000001" is returned.
++ *
++ * Return:	product ID string
++ */
++const char *get_product_id_from_eeprom(void);
++
+ #endif /* _ASM_RISCV_EEPROM_H */
+diff --git a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
+index c36de1a5125..a9f4376c8e1 100644
+--- a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
++++ b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
+@@ -405,6 +405,14 @@ static void set_product_id(char *string)
+ 	update_crc();
+ }
+ 
++const char *get_product_id_from_eeprom(void)
++{
++	if (read_eeprom())
++		return NULL;
++
++	return pbuf.eeprom.atom1.data.pstr;
++}
++
+ int do_mac(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ {
+ 	char *cmd;
+-- 
+2.43.0
+

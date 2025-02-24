@@ -1,0 +1,80 @@
+From f674a2f9a9f9c28fddde53f0a0b2f3e3c3b342ee Mon Sep 17 00:00:00 2001
+From: Masahisa Kojima <masahisa.kojima@linaro.org>
+Date: Fri, 19 Jan 2024 09:45:44 +0900
+Subject: [PATCH 1/2] efi_loader: avoid pointer access after calling
+ efi_delete_handle
+
+efi_delete_handle() calls efi_purge_handle(), then it finally
+frees the EFI handle.
+Both diskobj and handle variables in efi_disk_remove() have
+the same pointer, we can not access diskobj->dp after calling
+efi_delete_handle().
+
+This commit saves the struct efi_device_path pointer before
+calling efi_delete_handle(). This commit also fixes the
+missing free for volume member in struct efi_disk_obj.
+
+This commit also removes the container_of() calls, and
+adds the TODO comment of missing efi_close_protocol() call
+for the parent EFI_BLOCK_IO_PROTOCOL.
+
+Signed-off-by: Masahisa Kojima <masahisa.kojima@linaro.org>
+Reviewed-by: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+---
+ lib/efi_loader/efi_disk.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
+
+diff --git a/lib/efi_loader/efi_disk.c b/lib/efi_loader/efi_disk.c
+index 013842f077..105f080125 100644
+--- a/lib/efi_loader/efi_disk.c
++++ b/lib/efi_loader/efi_disk.c
+@@ -707,7 +707,9 @@ int efi_disk_remove(void *ctx, struct event *event)
+ 	struct udevice *dev = event->data.dm.dev;
+ 	efi_handle_t handle;
+ 	struct blk_desc *desc;
++	struct efi_device_path *dp = NULL;
+ 	struct efi_disk_obj *diskobj = NULL;
++	struct efi_simple_file_system_protocol *volume = NULL;
+ 	efi_status_t ret;
+ 
+ 	if (dev_tag_get_ptr(dev, DM_TAG_EFI, (void **)&handle))
+@@ -718,24 +720,30 @@ int efi_disk_remove(void *ctx, struct event *event)
+ 	case UCLASS_BLK:
+ 		desc = dev_get_uclass_plat(dev);
+ 		if (desc && desc->uclass_id != UCLASS_EFI_LOADER)
+-			diskobj = container_of(handle, struct efi_disk_obj,
+-					       header);
++			diskobj = (struct efi_disk_obj *)handle;
+ 		break;
+ 	case UCLASS_PARTITION:
+-		diskobj = container_of(handle, struct efi_disk_obj, header);
++		diskobj = (struct efi_disk_obj *)handle;
++
++		/* TODO: closing the parent EFI_BLOCK_IO_PROTOCOL is missing. */
++
+ 		break;
+ 	default:
+ 		return 0;
+ 	}
+ 
++	if (diskobj) {
++		dp = diskobj->dp;
++		volume = diskobj->volume;
++	}
++
+ 	ret = efi_delete_handle(handle);
+ 	/* Do not delete DM device if there are still EFI drivers attached. */
+ 	if (ret != EFI_SUCCESS)
+ 		return -1;
+ 
+-	if (diskobj)
+-		efi_free_pool(diskobj->dp);
+-
++	efi_free_pool(dp);
++	free(volume);
+ 	dev_tag_del(dev, DM_TAG_EFI);
+ 
+ 	return 0;
+-- 
+2.42.0
+

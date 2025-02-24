@@ -1,0 +1,54 @@
+From 8b40d2ee14a7195bb1ff644d85531aaf05731bf2 Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Sun, 3 Mar 2024 14:01:21 +0100
+Subject: [PATCH 4/5] riscv: starfive: avoid including common.h
+
+The usage of common.h is deprecated. Remove it from board files.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Origin: upstream, https://lore.kernel.org/u-boot/20240303130122.29983-5-heinrich.schuchardt@canonical.com/
+---
+ board/starfive/visionfive2/spl.c                    | 1 -
+ board/starfive/visionfive2/starfive_visionfive2.c   | 1 -
+ board/starfive/visionfive2/visionfive2-i2c-eeprom.c | 1 -
+ 3 files changed, 3 deletions(-)
+
+diff --git a/board/starfive/visionfive2/spl.c b/board/starfive/visionfive2/spl.c
+index c62624a2eb5..1699ed20acf 100644
+--- a/board/starfive/visionfive2/spl.c
++++ b/board/starfive/visionfive2/spl.c
+@@ -4,7 +4,6 @@
+  * Author: Yanhong Wang<yanhong.wang@starfivetech.com>
+  */
+ 
+-#include <common.h>
+ #include <asm/arch/eeprom.h>
+ #include <asm/arch/gpio.h>
+ #include <asm/arch/regs.h>
+diff --git a/board/starfive/visionfive2/starfive_visionfive2.c b/board/starfive/visionfive2/starfive_visionfive2.c
+index 9970e309690..e299769e50e 100644
+--- a/board/starfive/visionfive2/starfive_visionfive2.c
++++ b/board/starfive/visionfive2/starfive_visionfive2.c
+@@ -4,7 +4,6 @@
+  * Author: Yanhong Wang<yanhong.wang@starfivetech.com>
+  */
+ 
+-#include <common.h>
+ #include <cpu_func.h>
+ #include <dm.h>
+ #include <fdt_support.h>
+diff --git a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
+index a9f4376c8e1..ddef7d61235 100644
+--- a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
++++ b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
+@@ -4,7 +4,6 @@
+  * Author: Yanhong Wang<yanhong.wang@starfivetech.com>
+  */
+ 
+-#include <common.h>
+ #include <command.h>
+ #include <env.h>
+ #include <i2c.h>
+-- 
+2.43.0
+

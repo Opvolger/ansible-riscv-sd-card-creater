@@ -1,0 +1,17 @@
+Author: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Forwarded: not-needed
+Description: Enable the env erase sub-command on RISC-V arch
+ This should not be forwarded as it's Ubuntu's configuration decision to enable
+ the env erase sub-command by default on the RISC-V architecture. Upstream
+ wishes to keep the default configuration minimal
+
+--- a/cmd/Kconfig
++++ b/cmd/Kconfig
+@@ -612,6 +612,7 @@ config CMD_SAVEENV
+ config CMD_ERASEENV
+ 	bool "eraseenv"
+ 	depends on CMD_SAVEENV
++	default y if RISCV
+ 	help
+ 	  Erase environment variables from the compiled-in persistent
+ 	  storage.

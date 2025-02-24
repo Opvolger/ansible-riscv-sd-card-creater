@@ -1,0 +1,30 @@
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Subject: [PATCH 1/1] riscv: starfive: MMC card detect
+Date: Thu, 28 Mar 2024 22:46:15 +0100
+Fowarded: https://lore.kernel.org/u-boot/20240328214615.21501-1-heinrich.schuchardt@canonical.com/
+
+The VisionFive 2 board uses GPIO 41 as card detect as documented in
+https://doc-en.rvspace.org/VisionFive2/PDF/SCH_RV002_V1.2A_20221216.pdf.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+---
+ arch/riscv/dts/jh7110-starfive-visionfive-2.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/riscv/dts/jh7110-starfive-visionfive-2.dtsi b/arch/riscv/dts/jh7110-starfive-visionfive-2.dtsi
+index f2c6bec9298..e11babc1cde 100644
+--- a/arch/riscv/dts/jh7110-starfive-visionfive-2.dtsi
++++ b/arch/riscv/dts/jh7110-starfive-visionfive-2.dtsi
+@@ -298,7 +298,7 @@
+ 	pinctrl-0 = <&mmc1_pins>;
+ 	no-sdio;
+ 	no-mmc;
+-	broken-cd;
++	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_LOW>;
+ 	cap-sd-highspeed;
+ 	post-power-on-delay-ms = <200>;
+ 	status = "okay";
+-- 
+2.43.0
+
+

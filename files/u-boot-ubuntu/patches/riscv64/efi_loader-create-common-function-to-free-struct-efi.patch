@@ -1,0 +1,84 @@
+From 0351b659dd0283062d91ab0dd752887bedd53278 Mon Sep 17 00:00:00 2001
+From: Masahisa Kojima <masahisa.kojima@linaro.org>
+Date: Fri, 19 Jan 2024 09:45:45 +0900
+Subject: [PATCH 2/2] efi_loader: create common function to free struct
+ efi_disk_obj
+
+Current error handling of creating raw disk/partition has
+following issues.
+ - duplicate free for EFI handle, EFI handle is already freed
+   in efi_delete_handle()
+ - missing free for struct efi_device_path and
+   struct efi_simple_file_system_protocol in some error paths
+
+To address those issues, this commit creates the common function
+to free the struct efi_disk_obj resources and calls it in case
+of error.
+
+Signed-off-by: Masahisa Kojima <masahisa.kojima@linaro.org>
+Reviewed-by: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+---
+ lib/efi_loader/efi_disk.c | 26 +++++++++++++++++++-------
+ 1 file changed, 19 insertions(+), 7 deletions(-)
+
+diff --git a/lib/efi_loader/efi_disk.c b/lib/efi_loader/efi_disk.c
+index 105f080125..e2edc69fcf 100644
+--- a/lib/efi_loader/efi_disk.c
++++ b/lib/efi_loader/efi_disk.c
+@@ -371,6 +371,20 @@ static int efi_fs_exists(struct blk_desc *desc, int part)
+ 	return 1;
+ }
+ 
++static void efi_disk_free_diskobj(struct efi_disk_obj *diskobj)
++{
++	struct efi_device_path *dp = diskobj->dp;
++	struct efi_simple_file_system_protocol *volume = diskobj->volume;
++
++	/*
++	 * ignore error of efi_delete_handle() since this function
++	 * is expected to be called in error path.
++	 */
++	efi_delete_handle(&diskobj->header);
++	efi_free_pool(dp);
++	free(volume);
++}
++
+ /**
+  * efi_disk_add_dev() - create a handle for a partition or disk
+  *
+@@ -528,9 +542,7 @@ static efi_status_t efi_disk_add_dev(
+ 	}
+ 	return EFI_SUCCESS;
+ error:
+-	efi_delete_handle(&diskobj->header);
+-	free(diskobj->volume);
+-	free(diskobj);
++	efi_disk_free_diskobj(diskobj);
+ 	return ret;
+ }
+ 
+@@ -569,8 +581,7 @@ static int efi_disk_create_raw(struct udevice *dev, efi_handle_t agent_handle)
+ 		return ret;
+ 	}
+ 	if (efi_link_dev(&disk->header, dev)) {
+-		efi_free_pool(disk->dp);
+-		efi_delete_handle(&disk->header);
++		efi_disk_free_diskobj(disk);
+ 
+ 		return -EINVAL;
+ 	}
+@@ -624,8 +635,9 @@ static int efi_disk_create_part(struct udevice *dev, efi_handle_t agent_handle)
+ 		return -1;
+ 	}
+ 	if (efi_link_dev(&disk->header, dev)) {
+-		efi_free_pool(disk->dp);
+-		efi_delete_handle(&disk->header);
++		efi_disk_free_diskobj(disk);
++
++		/* TODO: closing the parent EFI_BLOCK_IO_PROTOCOL is missing. */
+ 
+ 		return -1;
+ 	}
+-- 
+2.42.0
+

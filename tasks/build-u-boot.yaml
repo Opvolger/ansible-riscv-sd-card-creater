@@ -11,6 +11,44 @@
     chdir: '{{ u_boot.git.checkout_dir }}'
     target: distclean
 
+- name: Delete untracked files from the working tree
+  ansible.builtin.shell: 
+    cmd: git clean -f
+    chdir: '{{ u_boot.git.checkout_dir }}'
+
+
+- name: Patches (http)
+  block:
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: /tmp/{{ item | basename }}
+    loop: "{{ u_boot.file_patches }}"
+
+  - name: Apply patch {{ item | basename }}
+    ansible.builtin.shell: 
+      cmd: git apply /tmp/{{ item | basename }}
+      chdir: '{{ u_boot.git.checkout_dir }}'
+    loop: "{{ u_boot.file_patches }}"
+  when: u_boot.file_patches is defined
+
+
+
+- name: Patches (http)
+  block:
+  - name: Download {{ item }}
+    ansible.builtin.get_url:
+      url: "{{ item }}"
+      dest: "/tmp/{{ item | basename }}"
+    loop: "{{ u_boot.https_patches }}"
+
+  - name: Apply patch {{ item | basename }}
+    ansible.builtin.shell: 
+      cmd: git apply /tmp/{{ item | basename }}
+      chdir: '{{ u_boot.git.checkout_dir }}'
+    loop: "{{ u_boot.https_patches }}"
+  when: u_boot.https_patches is defined
+
 - name: Add to configfile {{ u_boot.git.checkout_dir }}/configs/{{ u_boot.defconfig }}
   ansible.builtin.shell: echo "{{ item.key }}={{ item.value }}" >> {{ u_boot.git.checkout_dir }}/configs/{{ u_boot.defconfig }}
   when: 

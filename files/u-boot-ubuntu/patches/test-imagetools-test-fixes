@@ -1,0 +1,73 @@
+This patch allows testing in an alternate directory and also detects
+failures to execute commands, treating that as a failure.
+
+--- a/test/image/test-imagetools.sh
++++ b/test/image/test-imagetools.sh
+@@ -11,7 +11,7 @@
+ # make O=sandbox
+ # ./test/image/test-imagetools.sh
+ 
+-BASEDIR=sandbox
++BASEDIR=${BASEDIR:-"sandbox"}
+ SRCDIR=${BASEDIR}/boot
+ IMAGE_NAME="v1.0-test"
+ IMAGE_MULTI=linux.img
+@@ -94,7 +94,7 @@
+ 
+ 	echo -e "\nBuilding multi-file image..."
+ 	do_cmd ${MKIMAGE} -A x86 -O linux -T multi -n \"${IMAGE_NAME}\" \
+-		-d ${files} ${IMAGE_MULTI}
++		-d ${files} ${IMAGE_MULTI} || exit 1
+ 	echo "done."
+ }
+ 
+@@ -102,10 +102,10 @@
+ extract_multi_image()
+ {
+ 	echo -e "\nExtracting multi-file image contents..."
+-	do_cmd ${DUMPIMAGE} -T multi -p 0 -o ${DATAFILE0} ${IMAGE_MULTI}
+-	do_cmd ${DUMPIMAGE} -T multi -p 1 -o ${DATAFILE1} ${IMAGE_MULTI}
+-	do_cmd ${DUMPIMAGE} -T multi -p 2 -o ${DATAFILE2} ${IMAGE_MULTI}
+-	do_cmd ${DUMPIMAGE} -T multi -p 2 -o ${TEST_OUT} ${IMAGE_MULTI}
++	do_cmd ${DUMPIMAGE} -T multi -p 0 -o ${DATAFILE0} ${IMAGE_MULTI} || exit 1
++	do_cmd ${DUMPIMAGE} -T multi -p 1 -o ${DATAFILE1} ${IMAGE_MULTI} || exit 1
++	do_cmd ${DUMPIMAGE} -T multi -p 2 -o ${DATAFILE2} ${IMAGE_MULTI} || exit 1
++	do_cmd ${DUMPIMAGE} -T multi -p 2 -o ${TEST_OUT} ${IMAGE_MULTI} || exit 1
+ 	echo "done."
+ }
+ 
+@@ -158,7 +158,7 @@
+ 	" > ${IMAGE_FIT_ITS}
+ 
+ 	echo -e "\nBuilding FIT image..."
+-	do_cmd ${MKIMAGE} -f ${IMAGE_FIT_ITS} ${IMAGE_FIT_ITB}
++	do_cmd ${MKIMAGE} -f ${IMAGE_FIT_ITS} ${IMAGE_FIT_ITB} || exit 1
+ 	echo "done."
+ }
+ 
+@@ -166,10 +166,10 @@
+ extract_fit_image()
+ {
+ 	echo -e "\nExtracting FIT image contents..."
+-	do_cmd ${DUMPIMAGE} -T flat_dt -p 0 -o ${DATAFILE0} ${IMAGE_FIT_ITB}
+-	do_cmd ${DUMPIMAGE} -T flat_dt -p 1 -o ${DATAFILE1} ${IMAGE_FIT_ITB}
+-	do_cmd ${DUMPIMAGE} -T flat_dt -p 2 -o ${DATAFILE2} ${IMAGE_FIT_ITB}
+-	do_cmd ${DUMPIMAGE} -T flat_dt -p 2 -o ${TEST_OUT} ${IMAGE_FIT_ITB}
++	do_cmd ${DUMPIMAGE} -T flat_dt -p 0 -o ${DATAFILE0} ${IMAGE_FIT_ITB} || exit 1
++	do_cmd ${DUMPIMAGE} -T flat_dt -p 1 -o ${DATAFILE1} ${IMAGE_FIT_ITB} || exit 1
++	do_cmd ${DUMPIMAGE} -T flat_dt -p 2 -o ${DATAFILE2} ${IMAGE_FIT_ITB} || exit 1
++	do_cmd ${DUMPIMAGE} -T flat_dt -p 2 -o ${TEST_OUT} ${IMAGE_FIT_ITB} || exit 1
+ 	echo "done."
+ }
+ 
+@@ -181,8 +181,8 @@
+ 	local image="$1"
+ 
+ 	echo -e "\nListing image contents..."
+-	do_cmd_redir ${MKIMAGE_LIST} ${MKIMAGE} -l ${image}
+-	do_cmd_redir ${DUMPIMAGE_LIST} ${DUMPIMAGE} -l ${image}
++	do_cmd_redir ${MKIMAGE_LIST} ${MKIMAGE} -l ${image} || exit 1
++	do_cmd_redir ${DUMPIMAGE_LIST} ${DUMPIMAGE} -l ${image} || exit 1
+ 	echo "done."
+ }
+ 

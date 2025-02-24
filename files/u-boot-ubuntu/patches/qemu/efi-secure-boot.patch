@@ -1,0 +1,26 @@
+Author: Luca Boccassi <bluca@debian.org>
+Description: enable support for secure boot on qemu arm64/amd64
+ Secure boot is now supported upstream in EFI mode. It is disabled
+ by default, and can be enabled by loading keys from the console:
+
+ https://u-boot.readthedocs.io/en/latest/develop/uefi/uefi.html#configuring-uefi-secure-boot
+Index: u-boot/configs/qemu-x86_64_defconfig
+===================================================================
+--- u-boot.orig/configs/qemu-x86_64_defconfig
++++ u-boot/configs/qemu-x86_64_defconfig
+@@ -90,3 +90,5 @@ CONFIG_SPL_VIDEO=y
+ # CONFIG_SPL_USE_TINY_PRINTF is not set
+ CONFIG_GENERATE_ACPI_TABLE=y
+ # CONFIG_GZIP is not set
++CONFIG_EFI_SECURE_BOOT=y
++CONFIG_EFI_SIGNATURE_SUPPORT=y
+Index: u-boot/configs/qemu_arm64_defconfig
+===================================================================
+--- u-boot.orig/configs/qemu_arm64_defconfig
++++ u-boot/configs/qemu_arm64_defconfig
+@@ -69,3 +69,5 @@ CONFIG_USB_EHCI_HCD=y
+ CONFIG_USB_EHCI_PCI=y
+ CONFIG_SEMIHOSTING=y
+ CONFIG_TPM=y
++CONFIG_EFI_SECURE_BOOT=y
++CONFIG_EFI_SIGNATURE_SUPPORT=y

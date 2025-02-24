@@ -1,0 +1,64 @@
+From a55fa8acd219c025fca06ff130c95b97bc6cbd79 Mon Sep 17 00:00:00 2001
+From: Philippe Coval <rzr@users.sf.net>
+Date: Sat, 6 Jan 2024 11:06:41 +0100
+Subject: [PATCH] arm: sunxi: Reduce inrush current on Olimex
+ A20-OLinuXino_MICRO configs
+
+This change fix reboot, both configurations
+were tested on my Olimex A20 Micro Rev E with debian-12.
+
+This issue was also present and fixed on A20 Lime2 (in 8311e84b18),
+quoting Olliver Schinagl:
+
+    The lime2 features a too large capacitor on the LDO3 output, which
+    causes the PMIC to shutdown when enabling power. To be able to still
+    boot up however, we must gradually enable power on LDO3 for this board.
+    We do this by enabling both the inrush quirk and the maximum slope the
+    AXP209 supports.
+
+Link: https://bugs.debian.org/1060752
+Series-to: u-boot@lists.denx.de
+Series-links: 1:187331
+Series-version: 2
+Cc: Olliver Schinagl <oliver@schinagl.nl>
+Cc: Priit Laes <plaes@plaes.org>
+Cc: Maxime Ripard <maxime.ripard@bootlin.com>
+Signed-off-by: Philippe Coval <rzr@users.sf.net>
+Series-changes: 2
+- Add qirk to eMMC configuration of same machine
+Forwarded: http://patchwork.ozlabs.org/project/uboot/list/?series=394499
+Bug-Debian: https://bugs.debian.org/1060752
+Applied-Upstream: https://source.denx.de/u-boot/u-boot/-/commit/c93a6fc8f5313b2aa7081d53c3061c7c1b94afca#v2024.04-rc3-48-gc93a6fc8f5
+Signed-off-by: Philippe Coval <rzr@users.sf.net>
+---
+ configs/A20-OLinuXino_MICRO-eMMC_defconfig | 1 +
+ configs/A20-OLinuXino_MICRO_defconfig      | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/configs/A20-OLinuXino_MICRO-eMMC_defconfig b/configs/A20-OLinuXino_MICRO-eMMC_defconfig
+index ca5869f43d..2f26b0ca01 100644
+--- a/configs/A20-OLinuXino_MICRO-eMMC_defconfig
++++ b/configs/A20-OLinuXino_MICRO-eMMC_defconfig
+@@ -20,6 +20,7 @@ CONFIG_ETH_DESIGNWARE=y
+ CONFIG_MII=y
+ CONFIG_SUN7I_GMAC=y
+ CONFIG_SUN7I_GMAC_FORCE_TXERR=y
++CONFIG_AXP_ALDO3_INRUSH_QUIRK=y
+ CONFIG_AXP_ALDO3_VOLT=2800
+ CONFIG_AXP_ALDO4_VOLT=2800
+ CONFIG_SCSI=y
+diff --git a/configs/A20-OLinuXino_MICRO_defconfig b/configs/A20-OLinuXino_MICRO_defconfig
+index db4270f9b2..673ab85c8a 100644
+--- a/configs/A20-OLinuXino_MICRO_defconfig
++++ b/configs/A20-OLinuXino_MICRO_defconfig
+@@ -20,6 +20,7 @@ CONFIG_ETH_DESIGNWARE=y
+ CONFIG_MII=y
+ CONFIG_SUN7I_GMAC=y
+ CONFIG_SUN7I_GMAC_FORCE_TXERR=y
++CONFIG_AXP_ALDO3_INRUSH_QUIRK=y
+ CONFIG_AXP_ALDO3_VOLT=2800
+ CONFIG_AXP_ALDO4_VOLT=2800
+ CONFIG_SCSI=y
+-- 
+2.43.0
+

@@ -1,0 +1,14 @@
+Author: Dave Jones <dave.jones@canonical.com>
+Forwarded: no
+Description: Display SBI information on RISC-V boot
+
+--- a/cmd/Kconfig
++++ b/cmd/Kconfig
+@@ -206,6 +206,7 @@ config SPL_CMD_TLV_EEPROM
+ 
+ config CMD_SBI
+ 	bool "sbi"
++	default y
+ 	depends on RISCV_SMODE && SBI_V02
+ 	help
+ 	  Display information about the SBI implementation.

@@ -1,0 +1,46 @@
+From 513a75c02573680e6594bd328f698e2460db1a76 Mon Sep 17 00:00:00 2001
+From: Vagrant Cascadian <vagrant@reproducible-builds.org>
+Date: Tue, 16 Aug 2022 19:00:04 -0700
+Subject: [PATCH] Makefile: Use relative paths for debugging symbols.
+
+The KBUILD_CFLAGS and KBUILD_AFLAGS variables are adjusted to use
+-ffile-prefix-map and --debug-prefix-map, respectively, to use
+relative paths for occurrences of __FILE__ and debug paths.
+
+This enables reproducible builds regardless of the absolute path to
+the build directory:
+
+  https://reproducible-builds.org/docs/build-path/
+
+Series-to: u-boot
+
+Signed-off-by: Vagrant Cascadian <vagrant@reproducible-builds.org>
+---
+ Makefile | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+Index: u-boot/Makefile
+===================================================================
+--- u-boot.orig/Makefile
++++ u-boot/Makefile
+@@ -758,14 +758,18 @@ KBUILD_CFLAGS += $(call cc-disable-warni
+ # Enabled with W=2, disabled by default as noisy
+ KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
+ 
+-# change __FILE__ to the relative path from the srctree
+-KBUILD_CFLAGS	+= $(call cc-option,-fmacro-prefix-map=$(srctree)/=)
++# change __FILE__ and debugging symbols to the relative path from the
++# srctree
++KBUILD_CFLAGS	+= $(call cc-option,-ffile-prefix-map=$(srctree)/=)
+ 
+ KBUILD_CFLAGS	+= -gdwarf-4
+ # $(KBUILD_AFLAGS) sets -g, which causes gcc to pass a suitable -g<format>
+ # option to the assembler.
+ KBUILD_AFLAGS	+= -gdwarf-4
+ 
++# Use relative paths in debugging symbols
++KBUILD_AFLAGS   += --debug-prefix-map=$(srctree)/=
++
+ # Report stack usage if supported
+ # ARC tools based on GCC 7.1 has an issue with stack usage
+ # with naked functions, see commit message for more details

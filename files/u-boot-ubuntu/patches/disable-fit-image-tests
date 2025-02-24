@@ -1,0 +1,31 @@
+Disable FIT image tests.
+
+FIT images were made more robust in light of CVE-2021-27097 and
+CVE-2021-27138, but test-imagetools.sh was not updated to reflect
+those changes.
+
+Reported upstream: https://lists.denx.de/pipermail/u-boot/2021-March/443460.html
+
+diff --git a/test/image/test-imagetools.sh b/test/image/test-imagetools.sh
+index 907f46a7b5..e3b341b9e9 100755
+--- a/test/image/test-imagetools.sh
++++ b/test/image/test-imagetools.sh
+@@ -204,18 +204,6 @@ main()
+ 	list_image ${IMAGE_MULTI}
+ 	assert_equal ${DUMPIMAGE_LIST} ${MKIMAGE_LIST}
+ 
+-	# Compress and extract FIT images, compare the result
+-	create_fit_image
+-	extract_fit_image
+-	for file in ${DATAFILES}; do
+-		assert_equal ${file} ${SRCDIR}/${file}
+-	done
+-	assert_equal ${TEST_OUT} ${DATAFILE2}
+-
+-	# List contents of FIT image and compares output from tools
+-	list_image ${IMAGE_FIT_ITB}
+-	assert_equal ${DUMPIMAGE_LIST} ${MKIMAGE_LIST}
+-
+ 	# Remove files created
+ 	cleanup
+ 

@@ -1,0 +1,43 @@
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+To: Tom Rini <trini@konsulko.com>
+Cc: Rick Chen <rick@andestech.com>, Leo Yu-Chi Liang <ycliang@andestech.com>,
+ u-boot@lists.denx.de,
+ Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Subject: [PATCH 1/1] serial: move sbi_dbcn_available to .data section
+Date: Mon, 26 Feb 2024 17:32:26 +0100
+Message-ID: <20240226163226.126288-1-heinrich.schuchardt@canonical.com>
+Origin: https://patchwork.ozlabs.org/project/uboot/patch/20240226163226.126288-1-heinrich.schuchardt@canonical.com/
+Bug-Debian: https://bugs.debian.org/1060682
+
+U-Boot SPL loads the device-tree directly behind main U-Boot overlapping
+the .bss section. reserve_fdt() is called in board_init_f() to relocate the
+device-tree to a safe location.
+
+Debug UARTs are enabled before board_init_f(). With sbi_dbcn_available in
+the .bss section the device-tree is corrupted when _debug_uart_init() is
+called in the SBI serial driver. Move the variable to the .data section.
+
+Link: https://bugs.launchpad.net/ubuntu/+source/u-boot/+bug/2054091
+Fixes: dfe08374943c ("risc-v: implement DBCN based debug console")
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+---
+ drivers/serial/serial_sbi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/serial/serial_sbi.c b/drivers/serial/serial_sbi.c
+index a51a96c1ef0..f3ecfccab43 100644
+--- a/drivers/serial/serial_sbi.c
++++ b/drivers/serial/serial_sbi.c
+@@ -17,7 +17,7 @@ static inline void _debug_uart_putc(int c)
+ 
+ #else
+ 
+-static int sbi_dbcn_available;
++static int sbi_dbcn_available __section(".data");
+ 
+ static inline void _debug_uart_init(void)
+ {
+-- 
+2.43.0
+
+

@@ -1,0 +1,25 @@
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Subject: [PATCH 1/1] Makefile: don't use CFLAGS for environment text file
+Date: Fri,  2 Aug 2024 15:50:23 +0200
+Forwarded: https://lore.kernel.org/u-boot/20240802135023.107143-1-heinrich.schuchardt@canonical.com/T/#u
+
+We use KCPPFLAGS to let the user set flags when invoking the C precompiler.
+These should also be used when generating the environment text file.
+
+Reported-by: Dave Jones <dave.jones@canonical.com>
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -1807,7 +1807,7 @@ ENV_FILE := $(if $(ENV_SOURCE_FILE),$(EN
+ quiet_cmd_gen_envp = ENVP    $@
+       cmd_gen_envp = \
+ 	if [ -s "$(ENV_FILE)" ]; then \
+-		$(CPP) -P $(CFLAGS) -x assembler-with-cpp -D__ASSEMBLY__ \
++		$(CPP) -P $(cpp_flags) -x assembler-with-cpp -D__ASSEMBLY__ \
+ 			-D__UBOOT_CONFIG__ \
+ 			-I . -I include -I $(srctree)/include \
+ 			-include linux/kconfig.h -include include/config.h \

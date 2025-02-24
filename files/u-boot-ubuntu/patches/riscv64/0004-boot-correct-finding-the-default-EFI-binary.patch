@@ -1,0 +1,118 @@
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Wed, 3 Apr 2024 23:39:48 +0200
+Subject: [PATCH 4/4] boot: correct finding the default EFI binary
+
+* The sandbox must not use an arbitrary file name bootsbox.efi but the
+  file name matching the host architecture to properly boot the respective
+  file. We already have an include which provides a macro with the name of
+  the EFI binary. Use it.
+
+* The path to the EFI binary should be absolute.
+
+* The path and the file name must be capitalized to conform to the UEFI
+  specification. This is important when reading from case sensitive
+  file systems.
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Reviewed-by: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Tested-by: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Origin: upstream https://lore.kernel.org/u-boot/87r0fli2bq.fsf@bloch.sibelius.xs4all.nl/T/#m421a1714928310ded38daae18a07214e95697007
+---
+ boot/bootmeth_efi.c  | 44 +++-----------------------------------------
+ test/boot/bootflow.c |  4 +++-
+ 2 files changed, 6 insertions(+), 42 deletions(-)
+
+diff --git a/boot/bootmeth_efi.c b/boot/bootmeth_efi.c
+index 26af6e421fb..d2ab1099bd1 100644
+--- a/boot/bootmeth_efi.c
++++ b/boot/bootmeth_efi.c
+@@ -14,6 +14,7 @@
+ #include <bootmeth.h>
+ #include <command.h>
+ #include <dm.h>
++#include <efi_default_filename.h>
+ #include <efi_loader.h>
+ #include <fs.h>
+ #include <malloc.h>
+@@ -23,43 +24,7 @@
+ #include <pxe_utils.h>
+ #include <linux/sizes.h>
+ 
+-#define EFI_DIRNAME	"efi/boot/"
+-
+-/**
+- * get_efi_leafname() - Get the leaf name for the EFI file we expect
+- *
+- * @str: Place to put leaf name for this architecture, e.g. "bootaa64.efi".
+- *	Must have at least 16 bytes of space
+- * @max_len: Length of @str, must be >=16
+- */
+-static int get_efi_leafname(char *str, int max_len)
+-{
+-	const char *base;
+-
+-	if (max_len < 16)
+-		return log_msg_ret("spc", -ENOSPC);
+-	if (IS_ENABLED(CONFIG_ARM64))
+-		base = "bootaa64";
+-	else if (IS_ENABLED(CONFIG_ARM))
+-		base = "bootarm";
+-	else if (IS_ENABLED(CONFIG_X86_RUN_32BIT))
+-		base = "bootia32";
+-	else if (IS_ENABLED(CONFIG_X86_RUN_64BIT))
+-		base = "bootx64";
+-	else if (IS_ENABLED(CONFIG_ARCH_RV32I))
+-		base = "bootriscv32";
+-	else if (IS_ENABLED(CONFIG_ARCH_RV64I))
+-		base = "bootriscv64";
+-	else if (IS_ENABLED(CONFIG_SANDBOX))
+-		base = "bootsbox";
+-	else
+-		return -EINVAL;
+-
+-	strcpy(str, base);
+-	strcat(str, ".efi");
+-
+-	return 0;
+-}
++#define EFI_DIRNAME	"/EFI/BOOT/"
+ 
+ static int get_efi_pxe_arch(void)
+ {
+@@ -259,10 +224,7 @@ static int distro_efi_try_bootflow_files(struct udevice *dev,
+ 		return -ENOENT;
+ 
+ 	strcpy(fname, EFI_DIRNAME);
+-	ret = get_efi_leafname(fname + strlen(fname),
+-			       sizeof(fname) - strlen(fname));
+-	if (ret)
+-		return log_msg_ret("leaf", ret);
++	strcat(fname, BOOTEFI_NAME);
+ 
+ 	if (bflow->blk)
+ 		 desc = dev_get_uclass_plat(bflow->blk);
+diff --git a/test/boot/bootflow.c b/test/boot/bootflow.c
+index 5fb1afadb52..12e512b1527 100644
+--- a/test/boot/bootflow.c
++++ b/test/boot/bootflow.c
+@@ -13,6 +13,7 @@
+ #include <bootstd.h>
+ #include <cli.h>
+ #include <dm.h>
++#include <efi_default_filename.h>
+ #include <expo.h>
+ #ifdef CONFIG_SANDBOX
+ #include <asm/test.h>
+@@ -179,7 +180,8 @@ static int bootflow_cmd_scan_e(struct unit_test_state *uts)
+ 	ut_assert_nextline("  3  efi          media   mmc          0  mmc1.bootdev.whole        ");
+ 	ut_assert_nextline("     ** No partition found, err=-2: No such file or directory");
+ 	ut_assert_nextline("  4  extlinux     ready   mmc          1  mmc1.bootdev.part_1       /extlinux/extlinux.conf");
+-	ut_assert_nextline("  5  efi          fs      mmc          1  mmc1.bootdev.part_1       efi/boot/bootsbox.efi");
++	ut_assert_nextline("  5  efi          fs      mmc          1  mmc1.bootdev.part_1       /EFI/BOOT/"
++			   BOOTEFI_NAME);
+ 
+ 	ut_assert_skip_to_line("Scanning bootdev 'mmc0.bootdev':");
+ 	ut_assert_skip_to_line(
+-- 
+2.43.0
+

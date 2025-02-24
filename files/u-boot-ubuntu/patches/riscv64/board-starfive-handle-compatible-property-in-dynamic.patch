@@ -1,0 +1,57 @@
+From 465e7e6d506a419ab12ed0817d8f083d43584602 Mon Sep 17 00:00:00 2001
+From: Aurelien Jarno <aurelien@aurel32.net>
+Date: Wed, 10 Jan 2024 21:17:44 +0100
+Subject: [PATCH] board: starfive: handle compatible property in dynamic DT
+ configuration
+
+The difference between the StarFive VisionFive 2 1.2A and 1.3B boards is
+handled dynamically by looking at the PCB version in the EEPROM in order
+to have a single u-boot version for both versions of the board. While
+the "model" property is correctly handled, the "compatible" one is
+always the the one of version 1.3b.
+
+This patch add support for dynamically configuring that property.
+
+Fixes: 9b7060bd15e7 ("riscv: dts: jh7110: Combine the board device tree files of 1.2A and 1.3B")
+
+Signed-off-by: Aurelien Jarno <aurelien@aurel32.net>
+Reviewed-by: Leo Yu-Chi Liang <ycliang@andestech.com>
+---
+ board/starfive/visionfive2/spl.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/board/starfive/visionfive2/spl.c b/board/starfive/visionfive2/spl.c
+index 336f0cdfc9..911add429d 100644
+--- a/board/starfive/visionfive2/spl.c
++++ b/board/starfive/visionfive2/spl.c
+@@ -61,11 +61,13 @@ static const struct starfive_vf2_pro starfive_verb[] = {
+ 
+ void spl_fdt_fixup_version_a(void *fdt)
+ {
++	static const char compat[] = "starfive,visionfive-2-v1.2a\0starfive,jh7110";
+ 	u32 phandle;
+ 	u8 i;
+ 	int offset;
+ 	int ret;
+ 
++	fdt_setprop(fdt, fdt_path_offset(fdt, "/"), "compatible", compat, sizeof(compat));
+ 	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "model",
+ 			   "StarFive VisionFive 2 v1.2A");
+ 
+@@ -106,11 +108,13 @@ void spl_fdt_fixup_version_a(void *fdt)
+ 
+ void spl_fdt_fixup_version_b(void *fdt)
+ {
++	static const char compat[] = "starfive,visionfive-2-v1.3b\0starfive,jh7110";
+ 	u32 phandle;
+ 	u8 i;
+ 	int offset;
+ 	int ret;
+ 
++	fdt_setprop(fdt, fdt_path_offset(fdt, "/"), "compatible", compat, sizeof(compat));
+ 	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "model",
+ 			   "StarFive VisionFive 2 v1.3B");
+ 
+-- 
+2.42.0
+

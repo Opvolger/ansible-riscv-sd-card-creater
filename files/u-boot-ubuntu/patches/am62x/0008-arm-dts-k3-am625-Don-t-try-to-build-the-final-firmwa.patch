@@ -1,0 +1,70 @@
+From: Martyn Welch <martyn.welch@collabora.com>
+Date: Mon, 12 Feb 2024 17:41:04 +0000
+Subject: arm: dts: k3-am625*: Don't try to build the final firmware images
+
+The final firmware images require the inclusion of firmware elements that
+are not yet available in linux-firmware. Build the U-Boot elements so that
+these can be combined with the other elements at a later date.
+
+Signed-off-by: Martyn Welch <martyn.welch@collabora.com>
+---
+ arch/arm/dts/k3-am625-beagleplay-u-boot.dtsi | 4 ++++
+ arch/arm/dts/k3-am625-sk-binman.dtsi         | 8 ++++++++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/arch/arm/dts/k3-am625-beagleplay-u-boot.dtsi b/arch/arm/dts/k3-am625-beagleplay-u-boot.dtsi
+index d6c6baa..6df20ad 100644
+--- a/arch/arm/dts/k3-am625-beagleplay-u-boot.dtsi
++++ b/arch/arm/dts/k3-am625-beagleplay-u-boot.dtsi
+@@ -176,6 +176,8 @@
+ #define SPL_AM625_BEAGLEPLAY_DTB "spl/dts/k3-am625-beagleplay.dtb"
+ #define AM625_BEAGLEPLAY_DTB "arch/arm/dts/k3-am625-beagleplay.dtb"
+ 
++#if 0
++
+ &spl_am625_sk_dtb {
+ 	filename = SPL_AM625_BEAGLEPLAY_DTB;
+ };
+@@ -193,3 +195,5 @@
+ };
+ 
+ #endif
++
++#endif
+diff --git a/arch/arm/dts/k3-am625-sk-binman.dtsi b/arch/arm/dts/k3-am625-sk-binman.dtsi
+index 41277bf..9e61d2f 100644
+--- a/arch/arm/dts/k3-am625-sk-binman.dtsi
++++ b/arch/arm/dts/k3-am625-sk-binman.dtsi
+@@ -7,6 +7,8 @@
+ 
+ #ifdef CONFIG_TARGET_AM625_R5_EVM
+ 
++#if 0
++
+ &binman {
+ 	tiboot3-am62x-hs-evm.bin {
+ 		filename = "tiboot3-am62x-hs-evm.bin";
+@@ -139,6 +141,8 @@
+ 
+ #endif
+ 
++#endif
++
+ #ifdef CONFIG_TARGET_AM625_A53_EVM
+ 
+ #define SPL_NODTB "spl/u-boot-spl-nodtb.bin"
+@@ -147,6 +151,8 @@
+ #define UBOOT_NODTB "u-boot-nodtb.bin"
+ #define AM625_SK_DTB "u-boot.dtb"
+ 
++#if 0
++
+ &binman {
+ 	ti-dm {
+ 		filename = "ti-dm.bin";
+@@ -461,3 +467,5 @@
+ 	};
+ };
+ #endif
++
++#endif

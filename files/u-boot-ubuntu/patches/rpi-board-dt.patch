@@ -1,0 +1,46 @@
+Author: Dave Jones <dave.jones@canonical.com>
+Description: Use the board's device-tree rather than embedded
+ Our u-boot binaries should accept the device-tree passed by the firmware
+ rather than use an embedded one. Firstly, the OF_EMBED option is actively
+ discouraged by u-boot itself, and secondly it allows the same binary to
+ operate correctly on platforms with differing serial configurations, e.g. the
+ Pi 3 and Compute Module 3.
+Index: u-boot-2021.07~rc4+dfsg/configs/rpi_2_defconfig
+===================================================================
+--- u-boot-2021.07~rc4+dfsg.orig/configs/rpi_2_defconfig
++++ u-boot-2021.07~rc4+dfsg/configs/rpi_2_defconfig
+@@ -17,7 +17,7 @@ CONFIG_CMD_GPIO=y
+ CONFIG_CMD_MMC=y
+ CONFIG_CMD_USB=y
+ CONFIG_CMD_FS_UUID=y
+-CONFIG_OF_EMBED=y
++CONFIG_OF_BOARD=y
+ CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
+ CONFIG_ENV_FAT_DEVICE_AND_PART="0:1"
+ CONFIG_SYS_RELOC_GD_ENV_ADDR=y
+Index: u-boot-2021.07~rc4+dfsg/configs/rpi_3_32b_defconfig
+===================================================================
+--- u-boot-2021.07~rc4+dfsg.orig/configs/rpi_3_32b_defconfig
++++ u-boot-2021.07~rc4+dfsg/configs/rpi_3_32b_defconfig
+@@ -18,7 +18,7 @@ CONFIG_CMD_GPIO=y
+ CONFIG_CMD_MMC=y
+ CONFIG_CMD_USB=y
+ CONFIG_CMD_FS_UUID=y
+-CONFIG_OF_EMBED=y
++CONFIG_OF_BOARD=y
+ CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
+ CONFIG_ENV_FAT_DEVICE_AND_PART="0:1"
+ CONFIG_SYS_RELOC_GD_ENV_ADDR=y
+Index: u-boot-2021.07~rc4+dfsg/configs/rpi_3_defconfig
+===================================================================
+--- u-boot-2021.07~rc4+dfsg.orig/configs/rpi_3_defconfig
++++ u-boot-2021.07~rc4+dfsg/configs/rpi_3_defconfig
+@@ -18,7 +18,7 @@ CONFIG_CMD_GPIO=y
+ CONFIG_CMD_MMC=y
+ CONFIG_CMD_USB=y
+ CONFIG_CMD_FS_UUID=y
+-CONFIG_OF_EMBED=y
++CONFIG_OF_BOARD=y
+ CONFIG_SYS_REDUNDAND_ENVIRONMENT=y
+ CONFIG_ENV_FAT_DEVICE_AND_PART="0:1"
+ CONFIG_SYS_RELOC_GD_ENV_ADDR=y

@@ -1,0 +1,30 @@
+Author: Dave Jones <dave.jones@canonical.com>
+Forwarded: yes
+Description: Disable Broadcom PCI driver
+ The Broadcom PCI driver seems to break u-boot when booting on a Pi 4B with
+ 8Gb of RAM, when no monitor is attached. This is a brute-force and ignorance
+ patch and further (upstream) investigation is warranted to discover why this
+ is the case. Commit 3113c84ba25ec3ceae072cc5ad450c4238425939 (a merge,
+ annoyingly) is the first bad commit in the u-boot repository when bisecting
+ this issue.
+
+--- a/configs/rpi_4_32b_defconfig
++++ b/configs/rpi_4_32b_defconfig
+@@ -39,7 +39,6 @@ CONFIG_BCM2835_GPIO=y
+ CONFIG_MMC_SDHCI=y
+ CONFIG_MMC_SDHCI_BCM2835=y
+ CONFIG_BCMGENET=y
+-CONFIG_PCI_BRCMSTB=y
+ CONFIG_PINCTRL=y
+ # CONFIG_PINCTRL_GENERIC is not set
+ CONFIG_DM_RNG=y
+--- a/configs/rpi_4_defconfig
++++ b/configs/rpi_4_defconfig
+@@ -39,7 +39,6 @@ CONFIG_BCM2835_GPIO=y
+ CONFIG_MMC_SDHCI=y
+ CONFIG_MMC_SDHCI_BCM2835=y
+ CONFIG_BCMGENET=y
+-CONFIG_PCI_BRCMSTB=y
+ CONFIG_PINCTRL=y
+ # CONFIG_PINCTRL_GENERIC is not set
+ CONFIG_DM_RNG=y

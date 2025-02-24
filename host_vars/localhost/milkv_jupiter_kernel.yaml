@@ -61,7 +61,7 @@ milkv_jupiter_kernel:
     CONFIG_SPACEMIT_HDMIAUDIO: n
     CONFIG_SPACEMIT_K1X_CAMERA_V2: n
     # firmware in kernel
-    CONFIG_EXTRA_FIRMWARE: "esos.elf radeon/CYPRESS_pfp.bin radeon/CYPRESS_me.bin radeon/CYPRESS_rlc.bin radeon/CYPRESS_smc.bin radeon/CYPRESS_uvd.bin"
+    CONFIG_EXTRA_FIRMWARE: "esos.elf radeon/CYPRESS_pfp.bin radeon/CYPRESS_me.bin radeon/CYPRESS_rlc.bin radeon/CYPRESS_smc.bin radeon/CYPRESS_uvd.bin radeon/CEDAR_smc.bin radeon/CEDAR_me.bin radeon/CEDAR_pfp.bin radeon/CEDAR_rlc.bin"
     CONFIG_EXTRA_FIRMWARE_DIR: "../linux-firmware"
     # needed for fedora: (zram)
     CONFIG_BLK_DEV_RAM: y

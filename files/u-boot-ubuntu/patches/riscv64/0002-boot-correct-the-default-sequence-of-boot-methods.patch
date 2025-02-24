@@ -1,0 +1,89 @@
+From: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Date: Wed, 3 Apr 2024 20:34:15 +0200
+Subject: [PATCH 2/4] boot: correct the default sequence of boot methods
+
+The default sequence of boot methods is determined by alphabetical sorting
+during linkage.
+
+* efi_mgr must run before efi to be UEFI compliant
+* pxe should run as last resort
+
+Signed-off-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+Reviewed-by: Ilias Apalodimas <ilias.apalodimas@linaro.org>
+Origin: upstream https://lore.kernel.org/u-boot/87r0fli2bq.fsf@bloch.sibelius.xs4all.nl/T/#m5e2fe78fb558dfad2b419b1b00b162d5852cdd96
+---
+ boot/Kconfig            | 2 +-
+ boot/bootmeth_efi.c     | 2 +-
+ boot/bootmeth_efi_mgr.c | 2 +-
+ boot/bootmeth_pxe.c     | 2 +-
+ test/boot/bootflow.c    | 2 +-
+ 5 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/boot/Kconfig b/boot/Kconfig
+index 74a6c6f5db4..9b9710b6228 100644
+--- a/boot/Kconfig
++++ b/boot/Kconfig
+@@ -525,7 +525,7 @@ config BOOTMETH_EFILOADER
+ 
+ config BOOTMETH_EFI_BOOTMGR
+ 	bool "Bootdev support for EFI boot manager"
+-	depends on EFI_BOOTMGR
++	depends on CMD_BOOTEFI_BOOTMGR
+ 	select BOOTMETH_GLOBAL
+ 	default y
+ 	help
+diff --git a/boot/bootmeth_efi.c b/boot/bootmeth_efi.c
+index 446cb73140e..26af6e421fb 100644
+--- a/boot/bootmeth_efi.c
++++ b/boot/bootmeth_efi.c
+@@ -493,7 +493,7 @@ static const struct udevice_id distro_efi_bootmeth_ids[] = {
+ 	{ }
+ };
+ 
+-U_BOOT_DRIVER(bootmeth_efi) = {
++U_BOOT_DRIVER(bootmeth_4efi) = {
+ 	.name		= "bootmeth_efi",
+ 	.id		= UCLASS_BOOTMETH,
+ 	.of_match	= distro_efi_bootmeth_ids,
+diff --git a/boot/bootmeth_efi_mgr.c b/boot/bootmeth_efi_mgr.c
+index e6c42d41fb8..2a4b1a26db1 100644
+--- a/boot/bootmeth_efi_mgr.c
++++ b/boot/bootmeth_efi_mgr.c
+@@ -112,7 +112,7 @@ static const struct udevice_id efi_mgr_bootmeth_ids[] = {
+ 	{ }
+ };
+ 
+-U_BOOT_DRIVER(bootmeth_efi_mgr) = {
++U_BOOT_DRIVER(bootmeth_3efi_mgr) = {
+ 	.name		= "bootmeth_efi_mgr",
+ 	.id		= UCLASS_BOOTMETH,
+ 	.of_match	= efi_mgr_bootmeth_ids,
+diff --git a/boot/bootmeth_pxe.c b/boot/bootmeth_pxe.c
+index 8d489a11aa4..70f693aa239 100644
+--- a/boot/bootmeth_pxe.c
++++ b/boot/bootmeth_pxe.c
+@@ -184,7 +184,7 @@ static const struct udevice_id extlinux_bootmeth_pxe_ids[] = {
+ 	{ }
+ };
+ 
+-U_BOOT_DRIVER(bootmeth_pxe) = {
++U_BOOT_DRIVER(bootmeth_zpxe) = {
+ 	.name		= "bootmeth_pxe",
+ 	.id		= UCLASS_BOOTMETH,
+ 	.of_match	= extlinux_bootmeth_pxe_ids,
+diff --git a/test/boot/bootflow.c b/test/boot/bootflow.c
+index b97c566f000..5fb1afadb52 100644
+--- a/test/boot/bootflow.c
++++ b/test/boot/bootflow.c
+@@ -377,7 +377,7 @@ static int bootflow_system(struct unit_test_state *uts)
+ 	if (!IS_ENABLED(CONFIG_CMD_BOOTEFI_BOOTMGR))
+ 		return -EAGAIN;
+ 	ut_assertok(uclass_first_device_err(UCLASS_BOOTSTD, &bootstd));
+-	ut_assertok(device_bind(bootstd, DM_DRIVER_GET(bootmeth_efi_mgr),
++	ut_assertok(device_bind(bootstd, DM_DRIVER_GET(bootmeth_3efi_mgr),
+ 				"efi_mgr", 0, ofnode_null(), &dev));
+ 	ut_assertok(device_probe(dev));
+ 	sandbox_set_fake_efi_mgr_dev(dev, true);
+-- 
+2.43.0
+

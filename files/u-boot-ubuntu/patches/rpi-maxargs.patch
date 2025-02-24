@@ -1,0 +1,42 @@
+Author: Dave Jones <dave.jones@canonical.com>
+Forwarded: no
+Description: Allow more than 16 args for a command for LP: #1910094
+ The default u-boot command line configuration only permits a maximum of
+ 16 arguments per command. Unfortunately, the fix for LP: #1900879 demands
+ considerably more than this.
+
+--- a/configs/rpi_2_defconfig
++++ b/configs/rpi_2_defconfig
+@@ -51,3 +51,4 @@ CONFIG_SYS_WHITE_ON_BLACK=y
+ CONFIG_VIDEO_BCM2835=y
+ CONFIG_CONSOLE_SCROLL_LINES=10
+ CONFIG_PHYS_TO_BUS=y
++CONFIG_SYS_MAXARGS=64
+--- a/configs/rpi_3_32b_defconfig
++++ b/configs/rpi_3_32b_defconfig
+@@ -52,3 +52,4 @@ CONFIG_SYS_WHITE_ON_BLACK=y
+ CONFIG_VIDEO_BCM2835=y
+ CONFIG_CONSOLE_SCROLL_LINES=10
+ CONFIG_PHYS_TO_BUS=y
++CONFIG_SYS_MAXARGS=64
+--- a/configs/rpi_3_defconfig
++++ b/configs/rpi_3_defconfig
+@@ -51,3 +51,4 @@ CONFIG_SYS_WHITE_ON_BLACK=y
+ CONFIG_VIDEO_BCM2835=y
+ CONFIG_CONSOLE_SCROLL_LINES=10
+ CONFIG_PHYS_TO_BUS=y
++CONFIG_SYS_MAXARGS=64
+--- a/configs/rpi_4_32b_defconfig
++++ b/configs/rpi_4_32b_defconfig
+@@ -66,3 +66,4 @@ CONFIG_CONSOLE_SCROLL_LINES=10
+ CONFIG_PHYS_TO_BUS=y
+ CONFIG_ADDR_MAP=y
+ CONFIG_SYS_NUM_ADDR_MAP=2
++CONFIG_SYS_MAXARGS=64
+--- a/configs/rpi_4_defconfig
++++ b/configs/rpi_4_defconfig
+@@ -64,3 +64,4 @@ CONFIG_SYS_WHITE_ON_BLACK=y
+ CONFIG_VIDEO_BCM2835=y
+ CONFIG_CONSOLE_SCROLL_LINES=10
+ CONFIG_PHYS_TO_BUS=y
++CONFIG_SYS_MAXARGS=64
