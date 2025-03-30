@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  vars:
+    opensbi: "{{ starfive_visionfive2_opensbi }}"
+    u_boot: "{{ starfive_visionfive2_u_boot_ubuntu_25_04 }}"
+  tasks:
+    - include_tasks: tasks/build-opensbi.yaml
+    - include_tasks: tasks/build-u-boot.yaml

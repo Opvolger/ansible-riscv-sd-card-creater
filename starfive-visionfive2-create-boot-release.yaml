@@ -17,6 +17,15 @@
   tasks:
     - include_tasks: tasks/create-release.yaml
 
+- ansible.builtin.import_playbook: starfive-visionfive2-create-boot-compile-ubuntu-25-04.yaml
+
+- hosts: localhost
+  vars:
+    u_boot: "{{ starfive_visionfive2_u_boot_ubuntu_25_04 }}"
+    release_dir: ubuntu-25-04
+  tasks:
+    - include_tasks: tasks/create-release.yaml
+
     - name: Compress directory
       community.general.archive:
         path: /tmp/release

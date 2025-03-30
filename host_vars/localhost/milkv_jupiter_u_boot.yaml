@@ -8,6 +8,9 @@ milkv_jupiter_u_boot:
   add_to_config:
     DUMMY: n
     DUMMY2: n
+    CONFIG_BOOTDELAY: 10
+    CONFIG_CMD_BOOTMENU: y
+    CONFIG_AUTOBOOT_MENU_SHOW: y
     # disable nvme in u-boot (some GPU don't like that)
     # CONFIG_BOOTCOMMAND: "load {{ on_boot.boot_device }}:3 ${scriptaddr} boot.scr; source ${scriptaddr}"
     # disable nvme in u-boot (some GPU don't like that)

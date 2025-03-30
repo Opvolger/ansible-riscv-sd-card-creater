@@ -1,0 +1,19 @@
+starfive_visionfive2_u_boot_ubuntu_25_04:
+  git:
+    repo: "https://git.launchpad.net/ubuntu/+source/u-boot"
+    version: "ubuntu/plucky"    
+    checkout_dir: "/tmp/u-boot-24-04"
+  file_patches: []
+  defconfig: starfive_visionfive2_defconfig
+  add_to_config:
+    # disable nvme in u-boot (some GPU don't like that)
+    CONFIG_PCI_INIT_R: n
+    CONFIG_CMD_PCI: n
+
+    # https://launchpad.net/ubuntu/+source/u-boot/
+    # https://git.launchpad.net/ubuntu/+source/u-boot/tree/?h=ubuntu/plucky
+  build_params:
+    OPENSBI: ../opensbi/build/platform/generic/firmware/fw_payload.bin
+    CONFIG_DEFAULT_FDT_FILE: starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
+    CROSS_COMPILE: riscv64-linux-gnu-
+
