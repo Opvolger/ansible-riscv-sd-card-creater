@@ -1,7 +1,7 @@
 starfive_visionfive2_opensbi:
   git:
     repo: "https://github.com/riscv-software-src/opensbi.git"
-    version: "v1.5.1"
+    version: "v1.6"
     checkout_dir: "/tmp/opensbi"
   build_params:
     PLATFORM: generic

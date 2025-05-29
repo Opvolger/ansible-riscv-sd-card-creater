@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  vars:
+    kernel: "{{ starfive_visionfive2_kernel }}"
+    on_boot:
+      boot:
+        device: "mmc 1"
+        partition: 3
+      rootfs_location: "/dev/mmcblk1p4"
+      ramdisk:
+        device: "mmc 1"
+        partition: 4
+        location: /boot/initrd.img
+  tasks:
+    
+    - include_tasks: tasks/create-debian-trixie-partition.yaml

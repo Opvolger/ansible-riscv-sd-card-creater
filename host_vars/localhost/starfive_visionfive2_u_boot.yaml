@@ -1,7 +1,7 @@
 starfive_visionfive2_u_boot:
   git:
     repo: "https://github.com/u-boot/u-boot.git"
-    version: "v2024.10"    
+    version: "v2025.07-rc3"    
     checkout_dir: "/tmp/u-boot"
   defconfig: starfive_visionfive2_defconfig
   add_to_config:

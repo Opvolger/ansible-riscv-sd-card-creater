@@ -1,0 +1,96 @@
+- name: Creates directory
+  ansible.builtin.file:
+    path: "/tmp/mnt"
+    state: directory
+
+- name: Get stats Debian file
+  stat:
+    path: "/tmp/jh7110-starfive-visionfive-2-v1.3b.dtb"
+  register: downloadhere
+
+- name: Get Debian files
+  block:
+    - name: download jh7110-starfive-visionfive-2-v1.3b.dtb
+      get_url:
+        url: "https://deb.debian.org/debian/dists/testing/main/installer-riscv64/current/images/device-tree/starfive/jh7110-starfive-visionfive-2-v1.3b.dtb"
+        dest: "/tmp/jh7110-starfive-visionfive-2-v1.3b.dtb"
+    - name: download initrd.gz
+      get_url:
+        url: "https://deb.debian.org/debian/dists/testing/main/installer-riscv64/current/images/cdrom/initrd.gz"
+        dest: "/tmp/initrd.gz"
+    - name: download vmlinux
+      get_url:
+        url: "https://deb.debian.org/debian/dists/testing/main/installer-riscv64/current/images/cdrom/vmlinux"
+        dest: "/tmp/vmlinux"
+  when: not downloadhere.stat.exists
+
+- name: Read device information "{{ target }}"
+  become: true
+  become_user: root
+  community.general.parted: 
+    device: "{{ target }}"
+    unit: MiB
+  register: disk_info
+
+- name: Create new partition for rootfs
+  block:
+    - name: Create new partition for rootfs
+      become: true
+      become_user: root
+      community.general.parted:
+        device: "{{ target }}"
+        name: p.lxroot
+        label: gpt
+        number: "{{ disk_info.partitions | length + 1 }}"
+        part_start: "{{ disk_info.partitions[-1].end }}MiB"
+        part_end: "100%"
+        state: present
+
+    - name: Reset an ext4 filesystem UUID on /dev/sdb1
+      become: true
+      become_user: root
+      community.general.filesystem:
+        force: true
+        fstype: ext4
+        dev: "{{ target }}{{ disk_info.partitions | length + 1 }}"
+        uuid: BC13C2FF-59E6-4262-A352-B275FD6F7173
+  when: not disk_info.partitions[-1].name == 'p.lxroot'
+
+- name: Read device information "{{ target }}"
+  become: true
+  become_user: root
+  community.general.parted: 
+    device: "{{ target }}"
+    unit: MiB
+  register: disk_info
+
+- name: Mount block
+  block:
+  - name: Mount "{{ target }}{{ disk_info.partitions[-1].num }}"
+    become: true
+    become_user: root
+    ansible.posix.mount:
+      path: "/tmp/mnt"
+      src: "{{ target }}{{ disk_info.partitions[-1].num }}"
+      fstype: ext4
+      state: ephemeral
+
+  - name: Copy device tree
+    become: true
+    become_user: root
+    ansible.builtin.copy:
+      src: "/tmp/{{ item }}"
+      dest: "/tmp/mnt/{{ item }}"
+      mode: '0666'
+      remote_src: yes
+    with_items: 
+      - "jh7110-starfive-visionfive-2-v1.3b.dtb"
+      - "initrd.gz"
+      - "vmlinux"
+  always:
+  - name: Unmount "/tmp/mnt" (very slow!)
+    become: true
+    become_user: root
+    ansible.posix.mount:
+      path: "/tmp/mnt"
+      state: unmounted

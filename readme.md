@@ -86,6 +86,88 @@ Delete only last partition of the SD-card and run one of the other playbook:
 
 After creating the SD-Card, boot the device and do the next steps
 
+### Debian Trixie
+
+```bash
+ansible-playbook starfive-visionfive2-create-boot-partitions-debian-trixie.yaml --ask-become-pass -v
+ansible-playbook starfive-visionfive2-debian-trixie.yaml --ask-become-pass -v
+```
+
+Boot setup Trixie (SD-card)
+
+```bash
+load mmc 1:3 ${kernel_addr_r} /vmlinux
+load mmc 1:3 ${fdt_addr_r} /jh7110-starfive-visionfive-2-v1.3b.dtb
+load mmc 1:3 ${ramdisk_addr_r} /initrd.gz
+setenv bootargs 'desktop=kde priority=low'
+setenv kernel_comp_addr_r 0x50000000
+setenv kernel_comp_size 0x04000000
+booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
+```
+
+Walk through the setup, I used the eMMC to install to
+
+After reboot i booted the system in debian with:
+
+```bash
+# lookup version dtb file
+ls mmc 0:1 /usr/lib/
+```
+
+```bash
+load mmc 0:1 ${kernel_addr_r} /boot/vmlinuz
+load mmc 0:1 ${fdt_addr_r} /usr/lib/linux-image-6.12.27-riscv64/starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
+load mmc 0:1 ${ramdisk_addr_r} /boot/initrd.img
+setenv bootargs 'ro root=/dev/mmcblk0p1 LANG=en_US.UTF-8'
+setenv kernel_comp_addr_r 0x50000000
+setenv kernel_comp_size 0x04000000
+booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
+```
+
+Debian was working, only I had only the CD-ROM as repo source. so i did make a copy of the example configuration.
+
+```bash
+cd /etc/apt/sources.list.d
+sudo cp /usr/share/doc/apt/examples/debian.sources .
+```
+
+Now i can update and install stuff
+
+Disable sleep (freeze the system)
+
+```bash
+systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+
+Create boot.scr
+
+```bash
+sudo nano /boot/boot.cmd
+```
+
+```bash
+load mmc 0:1 ${kernel_addr_r} /boot/vmlinuz
+load mmc 0:1 ${fdt_addr_r} /usr/lib/linux-image-6.12.27-riscv64/starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
+load mmc 0:1 ${ramdisk_addr_r} /boot/initrd.img
+setenv bootargs 'ro root=/dev/mmcblk0p1 LANG=en_US.UTF-8'
+setenv kernel_comp_addr_r 0x50000000
+setenv kernel_comp_size 0x04000000
+booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
+```
+
+```bash
+sudo apt install u-boot-tools
+sudo mkimage -C none -A arm -T script -d /boot/boot.cmd /boot/boot.scr
+```
+
+Now we can boot in u-boot with:
+
+```bash
+load mmc 0:1 ${scriptaddr} /boot/boot.scr; source ${scriptaddr}
+```
+
+Or cp `boot.scr` to the root of your SD-card on boot 100% automatically to Debian linux
+
 ### Fedora 42
 
 Login with user `fedora` and password `linux`.
