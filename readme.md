@@ -86,7 +86,41 @@ Delete only last partition of the SD-card and run one of the other playbook:
 
 After creating the SD-Card, boot the device and do the next steps
 
-### Fedora
+### Fedora 42
+
+Login with user `fedora` and password `linux`.
+
+edit `/etc/default/grub` add amd radeon switch arguments on boot `GRUB_CMDLINE_LINUX_DEFAULT`
+
+```bash
+sudo nano /etc/default/grub
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+```
+
+```ini
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_DISABLE_RECOVERY=true
+GRUB_CMDLINE_LINUX_DEFAULT="radeon.si_support=0 amdgpu.si_support=1 radeon.cik_support=0 amdgpu.cik_support=1 earlycon rootflags=subvol=root"
+GRUB_GFXMODE=auto
+GRUB_TERMINAL_INPUT="serial"
+GRUB_TERMINAL_OUTPUT="serial"
+GRUB_TIMEOUT=3
+GRUB_TIMEOUT_STYLE=menu
+```
+
+```bash
+sudo dnf install @kde-desktop-environment
+# sddm is SLOW! on riscv with Fedora 42 (BUG?)
+sudo dnf install gdm
+sudo systemctl set-default graphical.target
+sudo systemctl disable sddm
+sudo systemctl enable gdm
+sudo balooctl6 disable
+sudo reboot
+```
+
+### Fedora 41
 
 Login with user `fedora` and password `fedora_rocks!`. Yes NOT with `riscv`, that user will NOT work!.
 

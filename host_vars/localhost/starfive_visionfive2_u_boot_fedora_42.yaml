@@ -1,0 +1,56 @@
+starfive_visionfive2_u_boot_fedora_42:
+  git:
+    repo: "https://github.com/u-boot/u-boot.git"
+    version: "v2025.04"    
+    checkout_dir: "/tmp/u-boot"
+  https_patches:
+    - https://src.fedoraproject.org/rpms/uboot-tools/raw/f42/f/uefi-distro-load-FDT-from-any-partition-on-boot-device.patch
+    - https://src.fedoraproject.org/rpms/uboot-tools/raw/f42/f/uefi-initial-find_fdt_location-for-finding-the-DT-on-disk.patch
+    - https://src.fedoraproject.org/rpms/uboot-tools/raw/f42/f/uefi-Add-all-options-for-EFI-System-Partitions.patch
+  defconfig: starfive_visionfive2_defconfig
+  add_to_config:
+    # I always boot from SD, but will use rootfs on other devices
+    CONFIG_BOOTCOMMAND: "bootmenu"
+    # escape bash + yaml, so for ' you need '\'' and $ will be '\\$'
+    CONFIG_PREBOOT: "usb start"
+
+    # disable nvme in u-boot (some GPU don't like that)
+    CONFIG_PCI_INIT_R: n
+    CONFIG_CMD_PCI: n
+
+    # http://fedora.riscv.rocks/repos-dist/f41-staging/latest/src/Packages/u/uboot-tools-2024.10-1.0.riscv64.fc41.src.rpm
+    # https://src.fedoraproject.org/rpms/uboot-tools/tree/f42
+    # from improve-riscv64-configs.patch
+    CONFIG_CMD_SBI: y
+    CONFIG_SYSRESET_SBI: y
+    CONFIG_CMD_POWEROFF: y
+    CONFIG_SYSRESET_CMD_POWEROFF: y
+    CONFIG_CMD_BTRFS: y
+    CONFIG_FS_BTRFS: y
+    CONFIG_CMD_EXT4_WRITE: y
+    CONFIG_FAT_WRITE: y
+    CONFIG_CMD_FS_UUID: y
+    CONFIG_CMD_LSBLK: y
+    CONFIG_CMD_WRITE: y
+    CONFIG_CMD_CAT: y
+    CONFIG_CMD_XXD: y
+    CONFIG_CMD_MTD: y
+    CONFIG_CMD_WGET: y
+    CONFIG_CMD_DNS: y
+    CONFIG_CMD_DHCP: y
+    CONFIG_CMD_EFIDEBUG: y
+    CONFIG_EFI_HTTP_BOOT: y
+    # from https://src.fedoraproject.org/rpms/uboot-tools/blob/f42/f/uefi-enable-SetVariableRT-with-volotile-storage.patch
+    CONFIG_EFI_VARIABLE_FILE_STORE: y
+    CONFIG_EFI_RT_VOLATILE_STORE: y
+    # from https://src.fedoraproject.org/rpms/uboot-tools/blob/f42/f/enable-bootmenu-by-default.patch
+    CONFIG_AUTOBOOT_KEYED: y
+    CONFIG_CMD_BOOTMENU: y
+    CONFIG_AUTOBOOT_MENU_SHOW: y
+    # from https://src.fedoraproject.org/rpms/uboot-tools/blob/f42/f/disable-VBE-by-default.patch
+    CONFIG_BOOTMETH_VBE: n
+
+  build_params:
+    OPENSBI: ../opensbi/build/platform/generic/firmware/fw_payload.bin
+    CONFIG_DEFAULT_FDT_FILE: starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
+    CROSS_COMPILE: riscv64-linux-gnu-

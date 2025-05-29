@@ -1,0 +1,9 @@
+---
+- ansible.builtin.import_playbook: starfive-visionfive2-create-boot-compile-fedora-42.yaml
+
+- hosts: localhost
+  vars:
+    u_boot: "{{ starfive_visionfive2_u_boot_fedora_42 }}"
+  tasks:
+    - include_tasks: tasks/clear-and-create-boot-partitions.yaml
+    - include_tasks: tasks/jh7110-write-to-boot-partitions.yaml

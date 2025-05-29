@@ -17,6 +17,15 @@
   tasks:
     - include_tasks: tasks/create-release.yaml
 
+- ansible.builtin.import_playbook: starfive-visionfive2-create-boot-compile-fedora-42.yaml
+
+- hosts: localhost
+  vars:
+    u_boot: "{{ starfive_visionfive2_u_boot_fedora_42 }}"
+    release_dir: fedora-42
+  tasks:
+    - include_tasks: tasks/create-release.yaml
+
 - ansible.builtin.import_playbook: starfive-visionfive2-create-boot-compile-ubuntu-25-04.yaml
 
 - hosts: localhost
