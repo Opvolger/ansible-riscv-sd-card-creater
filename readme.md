@@ -99,9 +99,7 @@ Boot setup Trixie (SD-card)
 load mmc 1:3 ${kernel_addr_r} /vmlinux
 load mmc 1:3 ${fdt_addr_r} /jh7110-starfive-visionfive-2-v1.3b.dtb
 load mmc 1:3 ${ramdisk_addr_r} /initrd.gz
-setenv bootargs 'desktop=kde priority=low'
-setenv kernel_comp_addr_r 0x50000000
-setenv kernel_comp_size 0x04000000
+setenv bootargs ''
 booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
 ```
 
@@ -118,9 +116,7 @@ ls mmc 0:1 /usr/lib/
 load mmc 0:1 ${kernel_addr_r} /boot/vmlinuz
 load mmc 0:1 ${fdt_addr_r} /usr/lib/linux-image-6.12.27-riscv64/starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
 load mmc 0:1 ${ramdisk_addr_r} /boot/initrd.img
-setenv bootargs 'ro root=/dev/mmcblk0p1 LANG=en_US.UTF-8'
-setenv kernel_comp_addr_r 0x50000000
-setenv kernel_comp_size 0x04000000
+setenv bootargs 'root=/dev/mmcblk0p1'
 booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
 ```
 
@@ -149,9 +145,7 @@ sudo nano /boot/boot.cmd
 load mmc 0:1 ${kernel_addr_r} /boot/vmlinuz
 load mmc 0:1 ${fdt_addr_r} /usr/lib/linux-image-6.12.27-riscv64/starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
 load mmc 0:1 ${ramdisk_addr_r} /boot/initrd.img
-setenv bootargs 'ro root=/dev/mmcblk0p1 LANG=en_US.UTF-8'
-setenv kernel_comp_addr_r 0x50000000
-setenv kernel_comp_size 0x04000000
+setenv bootargs 'root=/dev/mmcblk0p1'
 booti $kernel_addr_r $ramdisk_addr_r:$filesize $fdt_addr_r
 ```
 
