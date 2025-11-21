@@ -86,6 +86,13 @@ Delete only last partition of the SD-card and run one of the other playbook:
 
 After creating the SD-Card, boot the device and do the next steps
 
+### Debian Trixie on StarFive VisionFive 2 Lite
+
+```bash
+ansible-playbook starfive-visionfive2-lite-create-boot-partitions-debian-trixie.yaml --ask-become-pass -v
+ansible-playbook starfive-visionfive2-lite-debian-trixie.yaml --ask-become-pass -v
+```
+
 ### Debian Trixie
 
 ```bash

@@ -1,6 +1,6 @@
 - name: Get set kernel directory
   set_fact: 
-    kernel_dir: "{{ kernel.target }}/source/linux-{{ kernel.version }}"
+    kernel_dir: "{{ kernel.target }}/source/{{ kernel.kernel_zip_prefix | default('linux-') }}{{ kernel.version }}"
   when: kernel.download is defined
 
 - name: Get set kernel directory

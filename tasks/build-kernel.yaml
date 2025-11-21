@@ -48,7 +48,7 @@
 
   - name: Get set kernel directory
     set_fact: 
-      kernel_dir: "{{ kernel.target }}/source/linux-{{ kernel.version }}"
+      kernel_dir: "{{ kernel.target }}/source/{{ kernel.kernel_zip_prefix | default('linux-') }}{{ kernel.version }}"
 
   - name: Unarchive the kernel
     ansible.builtin.unarchive:
@@ -73,6 +73,23 @@
       version: '{{ kernel.git.version }}'
     when: kernel.git.checkout
   when: kernel.git is defined
+
+
+- name: Patches
+  block:
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: /tmp/{{ item | basename }}
+    loop: "{{ kernel.file_patches }}"
+
+  - name: Apply patch {{ item | basename }}
+    ansible.builtin.shell: 
+      cmd: git apply --reject --whitespace=fix /tmp/{{ item | basename }}
+      chdir: '{{ kernel_dir }}'
+    loop: "{{ kernel.file_patches }}"
+    # ignore_errors: true
+  when: kernel.file_patches is defined
 
 - name: Get stats of defconfig_backup
   stat:

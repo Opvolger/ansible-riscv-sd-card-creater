@@ -1,0 +1,66 @@
+starfive_visionfive2_lite_kernel:
+  target: "/home/opvolger/tmp/kernel"
+  download: https://git.kernel.org/pub/scm/linux/kernel/git/riscv/linux.git/snapshot/linux-riscv-for-linus-[version].tar.gz
+  version: "6.18-rc6"
+  kernel_zip_prefix: linux-riscv-for-linus-
+  dtb_file_location: /arch/riscv/boot/dts/starfive/jh7110s-starfive-visionfive-2-lite.dtb
+  # do not use modules
+  replace_m_for_y: true
+  file_patches:
+    - files/jh7110-lite/PATCH-v3-0-5-Add-support-for-StarFive-VisionFive-2-Lite-board.mbox
+  build_params:
+    CROSS_COMPILE: riscv64-linux-gnu-
+    ARCH: riscv
+  add_to_config:
+    # firmware in kernel
+    CONFIG_EXTRA_FIRMWARE: "amdgpu/hawaii_k_smc.bin amdgpu/hawaii_smc.bin amdgpu/hawaii_uvd.bin amdgpu/hawaii_vce.bin amdgpu/hawaii_sdma.bin amdgpu/hawaii_sdma1.bin amdgpu/hawaii_pfp.bin amdgpu/hawaii_me.bin amdgpu/hawaii_ce.bin amdgpu/hawaii_rlc.bin amdgpu/hawaii_mec.bin amdgpu/hawaii_mc.bin radeon/hawaii_pfp.bin radeon/hawaii_me.bin radeon/hawaii_ce.bin radeon/hawaii_mec.bin radeon/hawaii_mc.bin radeon/hawaii_rlc.bin radeon/hawaii_sdma.bin radeon/hawaii_smc.bin radeon/hawaii_k_smc.bin radeon/HAWAII_pfp.bin radeon/HAWAII_me.bin radeon/HAWAII_ce.bin radeon/HAWAII_mec.bin radeon/HAWAII_mc.bin radeon/HAWAII_mc2.bin radeon/HAWAII_rlc.bin radeon/HAWAII_sdma.bin radeon/HAWAII_smc.bin"
+    CONFIG_EXTRA_FIRMWARE_DIR: "../linux-firmware"
+
+    CONFIG_INPUT_EVDEV: y
+    
+    # DisplayLink
+    CONFIG_HAS_IOMEM: y
+    CONFIG_DRM: y
+    CONFIG_DRM_UDL: y
+    CONFIG_FB_CORE: y
+    CONFIG_LOGO: y
+    
+
+    # AMDGPU + HDMI sound
+    CONFIG_DRM_AMDGPU: y
+    CONFIG_DRM_AMD_DC: y
+    CONFIG_DRM_AMD_DC_FP: y
+    CONFIG_SND_DYNAMIC_MINORS: y
+    CONFIG_SND_MAX_CARDS: 32
+    CONFIG_SND_VMASTER: y
+    CONFIG_SND_HDA: y
+    CONFIG_SND_HDA_INTEL: y
+    CONFIG_SND_HDA_CODEC_HDMI: y
+    CONFIG_SND_HDA_POWER_SAVE_DEFAULT: 0
+    CONFIG_SND_HDA_CORE: y
+    CONFIG_SND_HDA_COMPONENT: y
+    CONFIG_SND_INTEL_NHLT: y
+    CONFIG_SND_INTEL_DSP_CONFIG: y
+    CONFIG_SND_INTEL_SOUNDWIRE_ACPI: y
+
+    # needed for ubuntu (snap):
+    CONFIG_SQUASHFS: y
+    CONFIG_SQUASHFS_FILE_CACHE: y
+    CONFIG_SQUASHFS_DECOMP_SINGLE: y
+    CONFIG_SQUASHFS_COMPILE_DECOMP_SINGLE: y
+    CONFIG_SQUASHFS_ZLIB: y
+    CONFIG_SQUASHFS_LZ4: y
+    CONFIG_SQUASHFS_LZO: y
+    CONFIG_SQUASHFS_XZ: y
+    CONFIG_SQUASHFS_ZSTD: y
+    CONFIG_SQUASHFS_FRAGMENT_CACHE_SIZE: 3
+
+    # needed for Fedora (zram)
+    CONFIG_BLK_DEV_RAM: y
+    CONFIG_BLK_DEV_RAM_COUNT: 16
+    CONFIG_BLK_DEV_RAM_SIZE: 4096
+    CONFIG_ZRAM: y
+    CONFIG_ZRAM_DEF_COMP_LZ4: y
+    CONFIG_ZRAM_DEF_COMP: "lz4"
+    CONFIG_ZRAM_WRITEBACK: y
+    CONFIG_ZRAM_MEMORY_TRACKING: y

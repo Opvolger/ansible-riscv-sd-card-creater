@@ -1,0 +1,770 @@
+diff --git a/arch/riscv/cpu/jh7110/spl.c b/arch/riscv/cpu/jh7110/spl.c
+index 87aaf865246..3aece7d995b 100644
+--- a/arch/riscv/cpu/jh7110/spl.c
++++ b/arch/riscv/cpu/jh7110/spl.c
+@@ -41,7 +41,7 @@ int spl_dram_init(void)
+ 	/* Read the definition of the DDR size from eeprom, and if not,
+ 	 * use the definition in DT
+ 	 */
+-	size = (get_ddr_size_from_eeprom() >> 16) & 0xFF;
++	size = get_ddr_size_from_eeprom();
+ 	if (check_ddr_size(size))
+ 		gd->ram_size = size << 30;
+ 
+diff --git a/arch/riscv/include/asm/arch-jh7110/eeprom.h b/arch/riscv/include/asm/arch-jh7110/eeprom.h
+index 45ad2a5f7bc..a803cdcf5f1 100644
+--- a/arch/riscv/include/asm/arch-jh7110/eeprom.h
++++ b/arch/riscv/include/asm/arch-jh7110/eeprom.h
+@@ -9,8 +9,19 @@
+ 
+ #include <linux/types.h>
+ 
++/**
++ * get_pcb_revision_from_eeprom() - get the PCB revision
++ *
++ * @return: the PCB revision or 0 on error.
++ */
+ u8 get_pcb_revision_from_eeprom(void);
+-u32 get_ddr_size_from_eeprom(void);
++
++/**
++ * get_ddr_size_from_eeprom() - read DDR size from EEPROM
++ *
++ * @return: size in GiB or 0 on error.
++ */
++u8 get_ddr_size_from_eeprom(void);
+ 
+ /**
+  * get_mmc_size_from_eeprom() - read eMMC size from EEPROM
+diff --git a/board/starfive/visionfive2/spl.c b/board/starfive/visionfive2/spl.c
+index 48b034af305..b2eb04b3b82 100644
+--- a/board/starfive/visionfive2/spl.c
++++ b/board/starfive/visionfive2/spl.c
+@@ -132,6 +132,9 @@ int board_fit_config_name_match(const char *name)
+ 	} else if (!strcmp(name, "starfive/jh7110-starfive-visionfive-2-v1.3b") &&
+ 		    !strncmp(get_product_id_from_eeprom(), "VF7110B", 7)) {
+ 		return 0;
++	} else if (!strcmp(name, "starfive/jh7110s-starfive-visionfive-2-lite") &&
++		    !strncmp(get_product_id_from_eeprom(), "VF7110SL", 8)) {
++		return 0;
+ 	}
+ 
+ 	return -EINVAL;
+diff --git a/board/starfive/visionfive2/starfive_visionfive2.c b/board/starfive/visionfive2/starfive_visionfive2.c
+index 6271974b9c7..013ba63994e 100644
+--- a/board/starfive/visionfive2/starfive_visionfive2.c
++++ b/board/starfive/visionfive2/starfive_visionfive2.c
+@@ -63,6 +63,8 @@ static void set_fdtfile(void)
+ 		fdtfile = "starfive/jh7110-starfive-visionfive-2-v1.2a.dtb";
+ 	} else if (!strncmp(get_product_id_from_eeprom(), "VF7110B", 7)) {
+ 		fdtfile = "starfive/jh7110-starfive-visionfive-2-v1.3b.dtb";
++	} else if (!strncmp(get_product_id_from_eeprom(), "VF7110SL", 8)) {
++		fdtfile = "starfive/jh7110s-starfive-visionfive-2-lite.dtb";
+ 	} else {
+ 		log_err("Unknown product\n");
+ 		return;
+diff --git a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
+index 17a44020bcf..96d7d6e2bd5 100644
+--- a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
++++ b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c
+@@ -105,7 +105,8 @@ struct eeprom_atom4_data {
+ 	u8 bom_revision;		/* BOM version */
+ 	u8 mac0_addr[MAC_ADDR_BYTES];	/* Ethernet0 MAC */
+ 	u8 mac1_addr[MAC_ADDR_BYTES];	/* Ethernet1 MAC */
+-	u8 reserved[2];
++	u8 onboard_module;	/* Onboard module flag: bit7-1: reserved, bit0: WIFI/BT */
++	u8 reserved;
+ };
+ 
+ struct starfive_eeprom_atom4 {
+@@ -176,7 +177,7 @@ static void show_eeprom(void)
+ 	printf("Vendor : %s\n", pbuf.eeprom.atom1.data.vstr);
+ 	printf("Product full SN: %s\n", pbuf.eeprom.atom1.data.pstr);
+ 	printf("data version: 0x%x\n", pbuf.eeprom.atom4.data.version);
+-	if (pbuf.eeprom.atom4.data.version == 2) {
++	if (pbuf.eeprom.atom4.data.version == 2 || pbuf.eeprom.atom4.data.version == 3) {
+ 		printf("PCB revision: 0x%x\n", pbuf.eeprom.atom4.data.pcb_revision);
+ 		printf("BOM revision: %c\n", pbuf.eeprom.atom4.data.bom_revision);
+ 		printf("Ethernet MAC0 address: %02x:%02x:%02x:%02x:%02x:%02x\n",
+@@ -187,6 +188,14 @@ static void show_eeprom(void)
+ 		       pbuf.eeprom.atom4.data.mac1_addr[0], pbuf.eeprom.atom4.data.mac1_addr[1],
+ 		       pbuf.eeprom.atom4.data.mac1_addr[2], pbuf.eeprom.atom4.data.mac1_addr[3],
+ 		       pbuf.eeprom.atom4.data.mac1_addr[4], pbuf.eeprom.atom4.data.mac1_addr[5]);
++		if (pbuf.eeprom.atom4.data.version == 3) {
++			char str[25] = "Onboard module: ";
++
++			if (pbuf.eeprom.atom4.data.onboard_module & BIT(0))
++				strcat(str, "WIFI/BT");
++
++			printf("%s\n", str);
++		}
+ 	} else {
+ 		printf("Custom data v%d is not Supported\n", pbuf.eeprom.atom4.data.version);
+ 		dump_raw_eeprom();
+@@ -260,6 +269,7 @@ static void init_local_copy(void)
+ 	pbuf.eeprom.atom4.data.bom_revision = BOM_VERSION;
+ 	set_mac_address(STARFIVE_DEFAULT_MAC0, 0);
+ 	set_mac_address(STARFIVE_DEFAULT_MAC1, 1);
++	pbuf.eeprom.atom4.data.onboard_module = 0;
+ }
+ 
+ /**
+@@ -385,6 +395,23 @@ static void set_bom_revision(char *string)
+ 	update_crc();
+ }
+ 
++/**
++ * set_onboard_module() - stores a StarFive onboard module flag into the local EEPROM copy
++ *
++ * Takes a pointer to a string representing the numeric onboard module flag in
++ * Hexadecimal ("0" - "FF"), stores it in the onboard_module field of the
++ * EEPROM local copy, and updates the CRC of the local copy.
++ */
++static void set_onboard_module(char *string)
++{
++	u8 onboard_module;
++
++	onboard_module = simple_strtoul(string, &string, 16);
++	pbuf.eeprom.atom4.data.onboard_module = onboard_module;
++
++	update_crc();
++}
++
+ /**
+  * set_product_id() - stores a StarFive product ID into the local EEPROM copy
+  *
+@@ -478,6 +505,9 @@ int do_mac(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	} else if (!strcmp(cmd, "bom_revision")) {
+ 		set_bom_revision(argv[2]);
+ 		return 0;
++	} else if (!strcmp(cmd, "onboard_module")) {
++		set_onboard_module(argv[2]);
++		return 0;
+ 	} else if (!strcmp(cmd, "product_id")) {
+ 		set_product_id(argv[2]);
+ 		return 0;
+@@ -542,31 +572,18 @@ int mac_read_from_eeprom(void)
+  */
+ u8 get_pcb_revision_from_eeprom(void)
+ {
+-	u8 pv = 0xFF;
+-
+ 	if (read_eeprom())
+-		return pv;
++		return 0;
+ 
+-	return pbuf.eeprom.atom1.data.pstr[6];
++	return pbuf.eeprom.atom4.data.pcb_revision;
+ }
+ 
+-/**
+- * get_ddr_size_from_eeprom - get the DDR size
+- * pstr:  VF7110A1-2228-D008E000-00000001
+- * VF7110A1/VF7110B1 : VisionFive JH7110A /VisionFive JH7110B
+- * D008: 8GB LPDDR4
+- * E000: No emmc device, ECxx: include emmc device, xx: Capacity size[GB]
+- * return: the field of 'D008E000'
+- */
+-
+-u32 get_ddr_size_from_eeprom(void)
++u8 get_ddr_size_from_eeprom(void)
+ {
+-	u32 pv = 0xFFFFFFFF;
+-
+ 	if (read_eeprom())
+-		return pv;
++		return 0;
+ 
+-	return hextoul(&pbuf.eeprom.atom1.data.pstr[14], NULL);
++	return (hextoul(&pbuf.eeprom.atom1.data.pstr[14], NULL) >> 16) & 0xFF;
+ }
+ 
+ u32 get_mmc_size_from_eeprom(void)
+@@ -603,6 +620,8 @@ U_BOOT_LONGHELP(mac,
+ 	"    - stores a StarFive PCB revision into the local EEPROM copy\n"
+ 	"mac bom_revision <A>\n"
+ 	"    - stores a StarFive BOM revision into the local EEPROM copy\n"
++	"mac onboard_module <?>\n"
++	"    - stores a StarFive onboard module flag into the local EEPROM copy\n"
+ 	"mac product_id <VF7110A1-2228-D008E000-xxxxxxxx>\n"
+ 	"    - stores a StarFive product ID into the local EEPROM copy\n"
+ 	"mac vendor <Vendor Name>\n"
+diff --git a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c.rej b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c.rej
+new file mode 100644
+index 00000000000..6f94b6aef14
+--- /dev/null
++++ b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c.rej
+@@ -0,0 +1,23 @@
++diff a/board/starfive/visionfive2/visionfive2-i2c-eeprom.c b/board/starfive/visionfive2/visionfive2-i2c-eeprom.c	(rejected hunks)
++@@ -535,19 +535,12 @@ int mac_read_from_eeprom(void)
++ 	return 0;
++ }
++ 
++-/**
++- * get_pcb_revision_from_eeprom - get the PCB revision
++- *
++- * 1.2A return 'A'/'a', 1.3B return 'B'/'b',other values are illegal
++- */
++ u8 get_pcb_revision_from_eeprom(void)
++ {
++-	u8 pv = 0xFF;
++-
++ 	if (read_eeprom())
++-		return pv;
+++		return 0;
++ 
++-	return pbuf.eeprom.atom1.data.pstr[6];
+++	return pbuf.eeprom.atom4.data.pcb_revision;
++ }
++ 
++ u8 get_ddr_size_from_eeprom(void)
+diff --git a/configs/starfive_visionfive2_defconfig b/configs/starfive_visionfive2_defconfig
+index 34ebf3b605b..005091ce1f5 100644
+--- a/configs/starfive_visionfive2_defconfig
++++ b/configs/starfive_visionfive2_defconfig
+@@ -79,7 +79,7 @@ CONFIG_CMD_WGET=y
+ CONFIG_CMD_BOOTSTAGE=y
+ CONFIG_OF_BOARD=y
+ CONFIG_DEVICE_TREE_INCLUDES="starfive-visionfive2-u-boot.dtsi"
+-CONFIG_OF_LIST="starfive/jh7110-deepcomputing-fml13v01 starfive/jh7110-milkv-mars starfive/jh7110-pine64-star64 starfive/jh7110-starfive-visionfive-2-v1.2a starfive/jh7110-starfive-visionfive-2-v1.3b"
++CONFIG_OF_LIST="starfive/jh7110-deepcomputing-fml13v01 starfive/jh7110-milkv-mars starfive/jh7110-pine64-star64 starfive/jh7110-starfive-visionfive-2-v1.2a starfive/jh7110-starfive-visionfive-2-v1.3b starfive/jh7110s-starfive-visionfive-2-lite"
+ CONFIG_MULTI_DTB_FIT=y
+ CONFIG_ENV_OVERWRITE=y
+ CONFIG_ENV_IS_IN_SPI_FLASH=y
+diff --git a/drivers/pci/pcie_starfive_jh7110.c b/drivers/pci/pcie_starfive_jh7110.c
+index 0908ae16b67..04088b48ddc 100644
+--- a/drivers/pci/pcie_starfive_jh7110.c
++++ b/drivers/pci/pcie_starfive_jh7110.c
+@@ -45,6 +45,7 @@ struct starfive_pcie {
+ 	struct pcie_plda plda;
+ 	struct clk_bulk	clks;
+ 	struct reset_ctl_bulk	rsts;
++	struct gpio_desc	power_gpio;
+ 	struct gpio_desc	reset_gpio;
+ 	struct regmap *regmap;
+ 	unsigned int stg_pcie_base;
+@@ -184,6 +185,10 @@ static int starfive_pcie_parse_dt(struct udevice *dev)
+ 		dev_err(dev, "reset-gpio is not valid\n");
+ 		return -EINVAL;
+ 	}
++
++	gpio_request_by_name(dev, "enable-gpios", 0, &priv->power_gpio,
++			     GPIOD_IS_OUT);
++
+ 	return 0;
+ }
+ 
+@@ -205,6 +210,9 @@ static int starfive_pcie_init_port(struct udevice *dev)
+ 		goto err_deassert_clk;
+ 	}
+ 
++	if (dm_gpio_is_valid(&priv->power_gpio))
++		dm_gpio_set_value(&priv->power_gpio, 1);
++
+ 	dm_gpio_set_value(&priv->reset_gpio, 1);
+ 	/* Disable physical functions except #0 */
+ 	for (i = 1; i < PLDA_FUNC_NUM; i++) {
+diff --git a/dts/upstream/src/riscv/starfive/jh7110-common.dtsi b/dts/upstream/src/riscv/starfive/jh7110-common.dtsi
+index 2eaf01775ef..8332622420c 100644
+--- a/dts/upstream/src/riscv/starfive/jh7110-common.dtsi
++++ b/dts/upstream/src/riscv/starfive/jh7110-common.dtsi
+@@ -281,15 +281,9 @@
+ 	assigned-clock-rates = <50000000>;
+ 	bus-width = <8>;
+ 	bootph-pre-ram;
+-	cap-mmc-highspeed;
+-	mmc-ddr-1_8v;
+-	mmc-hs200-1_8v;
+-	cap-mmc-hw-reset;
+ 	post-power-on-delay-ms = <200>;
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&mmc0_pins>;
+-	vmmc-supply = <&vcc_3v3>;
+-	vqmmc-supply = <&emmc_vdd>;
+ 	status = "okay";
+ };
+ 
+@@ -299,12 +293,7 @@
+ 	assigned-clock-rates = <50000000>;
+ 	bus-width = <4>;
+ 	bootph-pre-ram;
+-	no-sdio;
+-	no-mmc;
+-	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_LOW>;
+-	disable-wp;
+ 	cap-sd-highspeed;
+-	post-power-on-delay-ms = <200>;
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&mmc1_pins>;
+ 	status = "okay";
+@@ -448,17 +437,6 @@
+ 	};
+ 
+ 	mmc0_pins: mmc0-0 {
+-		 rst-pins {
+-			pinmux = <GPIOMUX(62, GPOUT_SYS_SDIO0_RST,
+-					      GPOEN_ENABLE,
+-					      GPI_NONE)>;
+-			bias-pull-up;
+-			drive-strength = <12>;
+-			input-disable;
+-			input-schmitt-disable;
+-			slew-rate = <0>;
+-		};
+-
+ 		mmc-pins {
+ 			pinmux = <PINMUX(PAD_SD0_CLK, 0)>,
+ 				 <PINMUX(PAD_SD0_CMD, 0)>,
+diff --git a/dts/upstream/src/riscv/starfive/jh7110-deepcomputing-fml13v01.dts b/dts/upstream/src/riscv/starfive/jh7110-deepcomputing-fml13v01.dts
+index f2857d021d6..5a2a41a7e8c 100644
+--- a/dts/upstream/src/riscv/starfive/jh7110-deepcomputing-fml13v01.dts
++++ b/dts/upstream/src/riscv/starfive/jh7110-deepcomputing-fml13v01.dts
+@@ -11,6 +11,55 @@
+ 	compatible = "deepcomputing,fml13v01", "starfive,jh7110";
+ };
+ 
++&cpu_opp {
++	opp-375000000 {
++		opp-hz = /bits/ 64 <375000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-500000000 {
++		opp-hz = /bits/ 64 <500000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-750000000 {
++		opp-hz = /bits/ 64 <750000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-1500000000 {
++		opp-hz = /bits/ 64 <1500000000>;
++		opp-microvolt = <1040000>;
++	};
++};
++
++&mmc0 {
++	cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++	mmc-ddr-1_8v;
++	mmc-hs200-1_8v;
++	vmmc-supply = <&vcc_3v3>;
++	vqmmc-supply = <&emmc_vdd>;
++};
++
++&mmc0_pins {
++	rst-pins {
++		pinmux = <GPIOMUX(62, GPOUT_SYS_SDIO0_RST,
++				      GPOEN_ENABLE,
++				      GPI_NONE)>;
++		bias-pull-up;
++		drive-strength = <12>;
++		input-disable;
++		input-schmitt-disable;
++		slew-rate = <0>;
++	};
++};
++
++&mmc1 {
++	no-sdio;
++	no-mmc;
++	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_LOW>;
++	disable-wp;
++	post-power-on-delay-ms = <200>;
++};
++
+ &pcie1 {
+ 	perst-gpios = <&sysgpio 21 GPIO_ACTIVE_LOW>;
+ 	phys = <&pciephy1>;
+diff --git a/dts/upstream/src/riscv/starfive/jh7110-milkv-mars.dts b/dts/upstream/src/riscv/starfive/jh7110-milkv-mars.dts
+index fdaf6b4557d..96f6b2f072d 100644
+--- a/dts/upstream/src/riscv/starfive/jh7110-milkv-mars.dts
++++ b/dts/upstream/src/riscv/starfive/jh7110-milkv-mars.dts
+@@ -11,6 +11,25 @@
+ 	compatible = "milkv,mars", "starfive,jh7110";
+ };
+ 
++&cpu_opp {
++	opp-375000000 {
++		opp-hz = /bits/ 64 <375000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-500000000 {
++		opp-hz = /bits/ 64 <500000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-750000000 {
++		opp-hz = /bits/ 64 <750000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-1500000000 {
++		opp-hz = /bits/ 64 <1500000000>;
++		opp-microvolt = <1040000>;
++	};
++};
++
+ &gmac0 {
+ 	assigned-clocks = <&aoncrg JH7110_AONCLK_GMAC0_TX>;
+ 	assigned-clock-parents = <&aoncrg JH7110_AONCLK_GMAC0_RMII_RTX>;
+@@ -22,6 +41,36 @@
+ 	status = "okay";
+ };
+ 
++&mmc0 {
++	cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++	mmc-ddr-1_8v;
++	mmc-hs200-1_8v;
++	vmmc-supply = <&vcc_3v3>;
++	vqmmc-supply = <&emmc_vdd>;
++};
++
++&mmc0_pins {
++	rst-pins {
++		pinmux = <GPIOMUX(62, GPOUT_SYS_SDIO0_RST,
++				      GPOEN_ENABLE,
++				      GPI_NONE)>;
++		bias-pull-up;
++		drive-strength = <12>;
++		input-disable;
++		input-schmitt-disable;
++		slew-rate = <0>;
++	};
++};
++
++&mmc1 {
++	no-sdio;
++	no-mmc;
++	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_LOW>;
++	disable-wp;
++	post-power-on-delay-ms = <200>;
++};
++
+ &pcie0 {
+ 	status = "okay";
+ };
+diff --git a/dts/upstream/src/riscv/starfive/jh7110-pine64-star64.dts b/dts/upstream/src/riscv/starfive/jh7110-pine64-star64.dts
+index 31e825be206..c9677aef9ff 100644
+--- a/dts/upstream/src/riscv/starfive/jh7110-pine64-star64.dts
++++ b/dts/upstream/src/riscv/starfive/jh7110-pine64-star64.dts
+@@ -14,6 +14,25 @@
+ 	};
+ };
+ 
++&cpu_opp {
++	opp-375000000 {
++		opp-hz = /bits/ 64 <375000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-500000000 {
++		opp-hz = /bits/ 64 <500000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-750000000 {
++		opp-hz = /bits/ 64 <750000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-1500000000 {
++		opp-hz = /bits/ 64 <1500000000>;
++		opp-microvolt = <1040000>;
++	};
++};
++
+ &gmac0 {
+ 	starfive,tx-use-rgmii-clk;
+ 	assigned-clocks = <&aoncrg JH7110_AONCLK_GMAC0_TX>;
+@@ -44,6 +63,36 @@
+ 	status = "okay";
+ };
+ 
++&mmc0 {
++	cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++	mmc-ddr-1_8v;
++	mmc-hs200-1_8v;
++	vmmc-supply = <&vcc_3v3>;
++	vqmmc-supply = <&emmc_vdd>;
++};
++
++&mmc0_pins {
++	rst-pins {
++		pinmux = <GPIOMUX(62, GPOUT_SYS_SDIO0_RST,
++				      GPOEN_ENABLE,
++				      GPI_NONE)>;
++		bias-pull-up;
++		drive-strength = <12>;
++		input-disable;
++		input-schmitt-disable;
++		slew-rate = <0>;
++	};
++};
++
++&mmc1 {
++	no-sdio;
++	no-mmc;
++	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_LOW>;
++	disable-wp;
++	post-power-on-delay-ms = <200>;
++};
++
+ &pcie1 {
+ 	status = "okay";
+ };
+diff --git a/dts/upstream/src/riscv/starfive/jh7110-starfive-visionfive-2.dtsi b/dts/upstream/src/riscv/starfive/jh7110-starfive-visionfive-2.dtsi
+index 5f14afb2c24..d1e4206f125 100644
+--- a/dts/upstream/src/riscv/starfive/jh7110-starfive-visionfive-2.dtsi
++++ b/dts/upstream/src/riscv/starfive/jh7110-starfive-visionfive-2.dtsi
+@@ -13,6 +13,25 @@
+ 	};
+ };
+ 
++&cpu_opp {
++	opp-375000000 {
++		opp-hz = /bits/ 64 <375000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-500000000 {
++		opp-hz = /bits/ 64 <500000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-750000000 {
++		opp-hz = /bits/ 64 <750000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-1500000000 {
++		opp-hz = /bits/ 64 <1500000000>;
++		opp-microvolt = <1040000>;
++	};
++};
++
+ &gmac0 {
+ 	status = "okay";
+ };
+@@ -38,9 +57,36 @@
+ };
+ 
+ &mmc0 {
++	cap-mmc-highspeed;
++	cap-mmc-hw-reset;
++	mmc-ddr-1_8v;
++	mmc-hs200-1_8v;
++	vmmc-supply = <&vcc_3v3>;
++	vqmmc-supply = <&emmc_vdd>;
+ 	non-removable;
+ };
+ 
++&mmc0_pins {
++	rst-pins {
++		pinmux = <GPIOMUX(62, GPOUT_SYS_SDIO0_RST,
++				      GPOEN_ENABLE,
++				      GPI_NONE)>;
++		bias-pull-up;
++		drive-strength = <12>;
++		input-disable;
++		input-schmitt-disable;
++		slew-rate = <0>;
++	};
++};
++
++&mmc1 {
++	no-sdio;
++	no-mmc;
++	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_LOW>;
++	disable-wp;
++	post-power-on-delay-ms = <200>;
++};
++
+ &pcie0 {
+ 	status = "okay";
+ };
+diff --git a/dts/upstream/src/riscv/starfive/jh7110.dtsi b/dts/upstream/src/riscv/starfive/jh7110.dtsi
+index 0ba74ef0467..d2463399b95 100644
+--- a/dts/upstream/src/riscv/starfive/jh7110.dtsi
++++ b/dts/upstream/src/riscv/starfive/jh7110.dtsi
+@@ -200,22 +200,6 @@
+ 	cpu_opp: opp-table-0 {
+ 			compatible = "operating-points-v2";
+ 			opp-shared;
+-			opp-375000000 {
+-					opp-hz = /bits/ 64 <375000000>;
+-					opp-microvolt = <800000>;
+-			};
+-			opp-500000000 {
+-					opp-hz = /bits/ 64 <500000000>;
+-					opp-microvolt = <800000>;
+-			};
+-			opp-750000000 {
+-					opp-hz = /bits/ 64 <750000000>;
+-					opp-microvolt = <800000>;
+-			};
+-			opp-1500000000 {
+-					opp-hz = /bits/ 64 <1500000000>;
+-					opp-microvolt = <1040000>;
+-			};
+ 	};
+ 
+ 	thermal-zones {
+diff --git a/dts/upstream/src/riscv/starfive/jh7110s-starfive-visionfive-2-lite.dts b/dts/upstream/src/riscv/starfive/jh7110s-starfive-visionfive-2-lite.dts
+new file mode 100644
+index 00000000000..30842b0cd1f
+--- /dev/null
++++ b/dts/upstream/src/riscv/starfive/jh7110s-starfive-visionfive-2-lite.dts
+@@ -0,0 +1,159 @@
++// SPDX-License-Identifier: GPL-2.0 OR MIT
++/*
++ * Copyright (C) 2025 StarFive Technology Co., Ltd.
++ * Copyright (C) 2025 Hal Feng <hal.feng@starfivetech.com>
++ */
++
++/dts-v1/;
++#include "jh7110-common.dtsi"
++
++/ {
++	model = "StarFive VisionFive 2 Lite";
++	compatible = "starfive,visionfive-2-lite", "starfive,jh7110s";
++};
++
++&cpu_opp {
++	opp-312500000 {
++		opp-hz = /bits/ 64 <312500000>;
++		opp-microvolt = <800000>;
++	};
++	opp-417000000 {
++		opp-hz = /bits/ 64 <417000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-625000000 {
++		opp-hz = /bits/ 64 <625000000>;
++		opp-microvolt = <800000>;
++	};
++	opp-1250000000 {
++		opp-hz = /bits/ 64 <1250000000>;
++		opp-microvolt = <1000000>;
++	};
++};
++
++&gmac0 {
++	starfive,tx-use-rgmii-clk;
++	assigned-clocks = <&aoncrg JH7110_AONCLK_GMAC0_TX>;
++	assigned-clock-parents = <&aoncrg JH7110_AONCLK_GMAC0_RMII_RTX>;
++	status = "okay";
++};
++
++&i2c0 {
++	status = "okay";
++};
++
++&mmc0 {
++	bus-width = <4>;
++	no-sdio;
++	no-mmc;
++	cd-gpios = <&sysgpio 41 GPIO_ACTIVE_HIGH>;
++	disable-wp;
++	cap-sd-highspeed;
++};
++
++&mmc1 {
++	max-frequency = <50000000>;
++	keep-power-in-suspend;
++	non-removable;
++};
++
++&pcie1 {
++	enable-gpios = <&sysgpio 27 GPIO_ACTIVE_HIGH>;
++	status = "okay";
++};
++
++&phy0 {
++	motorcomm,tx-clk-adj-enabled;
++	motorcomm,tx-clk-100-inverted;
++	motorcomm,tx-clk-1000-inverted;
++	motorcomm,rx-clk-drv-microamp = <3970>;
++	motorcomm,rx-data-drv-microamp = <2910>;
++	rx-internal-delay-ps = <1500>;
++	tx-internal-delay-ps = <1500>;
++};
++
++&pwm {
++	status = "okay";
++};
++
++&spi0 {
++	status = "okay";
++};
++
++&syscrg {
++	assigned-clock-rates = <0>, <0>, <0>, <0>, <500000000>, <1250000000>;
++};
++
++&sysgpio {
++	uart1_pins: uart1-0 {
++		tx-pins {
++			pinmux = <GPIOMUX(22, GPOUT_SYS_UART1_TX,
++					      GPOEN_ENABLE,
++					      GPI_NONE)>;
++			bias-disable;
++			drive-strength = <12>;
++			input-disable;
++			input-schmitt-disable;
++			slew-rate = <0>;
++		};
++
++		rx-pins {
++			pinmux = <GPIOMUX(23, GPOUT_LOW,
++					      GPOEN_DISABLE,
++					      GPI_SYS_UART1_RX)>;
++			bias-pull-up;
++			drive-strength = <2>;
++			input-enable;
++			input-schmitt-enable;
++			slew-rate = <0>;
++		};
++
++		cts-pins {
++			pinmux = <GPIOMUX(24, GPOUT_LOW,
++					      GPOEN_DISABLE,
++					      GPI_SYS_UART1_CTS)>;
++			input-enable;
++		};
++
++		rts-pins {
++			pinmux = <GPIOMUX(25, GPOUT_SYS_UART1_RTS,
++					      GPOEN_ENABLE,
++					      GPI_NONE)>;
++			input-enable;
++		};
++	};
++
++	usb0_pins: usb0-0 {
++		power-pins {
++			pinmux = <GPIOMUX(26, GPOUT_HIGH,
++					      GPOEN_ENABLE,
++					      GPI_NONE)>;
++			input-disable;
++		};
++
++		switch-pins {
++			pinmux = <GPIOMUX(62, GPOUT_LOW,
++					      GPOEN_ENABLE,
++					      GPI_NONE)>;
++			input-disable;
++		};
++	};
++};
++
++&uart1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart1_pins>;
++	status = "okay";
++};
++
++&usb0 {
++	dr_mode = "host";
++	pinctrl-names = "default";
++	pinctrl-0 = <&usb0_pins>;
++	status = "okay";
++};
++
++&usb_cdns3 {
++	phys = <&usbphy0>, <&pciephy0>;
++	phy-names = "cdns3,usb2-phy", "cdns3,usb3-phy";
++};

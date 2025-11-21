@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  vars:
+    kernel: "{{ starfive_visionfive2_lite_kernel }}"
+    on_boot:
+      boot:
+        device: "mmc 1"
+        partition: 3
+        bootargs: root=/dev/mmcblk1p4 rw console=tty0 console=ttyS0,115200 earlycon rootwait stmmaceth=chain_mode:1 selinux=0 radeon.cik_support=0 amdgpu.cik_support=1 radeon.si_support=0 amdgpu.si_support=1
+      rootfs_location: "/dev/mmcblk1p4"
+      ramdisk:
+        device: "mmc 1"
+        partition: 4
+        location: /boot/initrd.img
+  tasks:    
+    # - include_tasks: tasks/create-debian-trixie-partition.yaml
+    # - include_tasks: tasks/build-kernel.yaml
+    - include_tasks: tasks/copy-kernel-to-drive.yaml

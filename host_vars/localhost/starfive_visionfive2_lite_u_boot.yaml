@@ -1,0 +1,22 @@
+starfive_visionfive2_lite_u_boot:
+  git:
+    repo: "https://github.com/u-boot/u-boot.git"
+    version: "b10c055d4e1b5153a331a61ef82a5b01b5bb4c45"    
+    checkout_dir: "/tmp/u-boot"
+  defconfig: starfive_visionfive2_defconfig
+  file_patches:
+   - files/jh7110-lite/u-boot.patch
+  add_to_config:
+    # I always boot from SD, but will use rootfs on other devices
+    CONFIG_BOOTCOMMAND: "load mmc 1:3 ${scriptaddr} boot.scr; source ${scriptaddr}"
+    # escape bash + yaml, so for ' you need '\'' and $ will be '\\$'
+    CONFIG_PREBOOT: "usb start; setenv fdt_addr '\\$'{fdtcontroladdr}; fdt addr '\\$'{fdtcontroladdr}; setenv bootcmd '\\''load mmc 1:3 '\\$'{scriptaddr} boot.scr; source '\\$'{scriptaddr}'\\''"
+
+    # disable nvme in u-boot (some GPU don't like that)
+    CONFIG_PCI_INIT_R: n
+    CONFIG_CMD_PCI: n
+  build_params:
+    OPENSBI: ../opensbi/build/platform/generic/firmware/fw_payload.bin
+    CONFIG_DEFAULT_FDT_FILE: starfive/jh7110s-starfive-visionfive-2-lite.dts
+    CROSS_COMPILE: riscv64-linux-gnu-
+

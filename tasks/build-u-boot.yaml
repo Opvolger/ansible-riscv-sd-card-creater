@@ -27,7 +27,7 @@
 
   - name: Apply patch {{ item | basename }}
     ansible.builtin.shell: 
-      cmd: git apply /tmp/{{ item | basename }}
+      cmd: git apply  --ignore-space-change /tmp/{{ item | basename }}
       chdir: '{{ u_boot.git.checkout_dir }}'
     loop: "{{ u_boot.file_patches }}"
   when: u_boot.file_patches is defined

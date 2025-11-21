@@ -1,0 +1,12 @@
+---
+# - ansible.builtin.import_playbook: starfive-visionfive2-lite-create-boot-compile-standard.yaml
+
+- hosts: localhost
+  vars:
+    u_boot: "{{ starfive_visionfive2_lite_u_boot }}"
+  tasks:
+    # - include_tasks: tasks/clear-and-create-boot-partitions.yaml
+    # - include_tasks: tasks/jh7110-write-to-boot-partitions.yaml
+    # - include_tasks: tasks/create-bootfs-partition.yaml
+    - include_tasks: tasks/build-kernel.yaml
+    - include_tasks: tasks/copy-kernel-to-drive.yaml
