@@ -1,7 +1,7 @@
 starfive_visionfive2_kernel:
   target: "/tmp/kernel"
   download: https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-[version].tar.xz
-  version: "6.12.5"
+  version: "6.13"
   dtb_file_location: /arch/riscv/boot/dts/starfive/jh7110-starfive-visionfive-2-v1.3b.dtb
   # do not use modules
   replace_m_for_y: true
@@ -15,8 +15,18 @@ starfive_visionfive2_kernel:
 
     CONFIG_INPUT_EVDEV: y
     
+    # DisplayLink
+    CONFIG_HAS_IOMEM: y
+    CONFIG_DRM: y
+    CONFIG_DRM_UDL: y
+    CONFIG_FB_CORE: y
+    CONFIG_LOGO: y
+    
+
     # AMDGPU + HDMI sound
     CONFIG_DRM_AMDGPU: y
+    CONFIG_DRM_AMDGPU_SI: y
+    CONFIG_DRM_AMDGPU_CIK: y
     CONFIG_DRM_AMD_DC: y
     CONFIG_DRM_AMD_DC_FP: y
     CONFIG_SND_DYNAMIC_MINORS: y
@@ -53,3 +63,4 @@ starfive_visionfive2_kernel:
     CONFIG_ZRAM_DEF_COMP: "lz4"
     CONFIG_ZRAM_WRITEBACK: y
     CONFIG_ZRAM_MEMORY_TRACKING: y
+    
