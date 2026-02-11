@@ -4,6 +4,9 @@ ramdisk_addr_r={{ on_boot.ramdisk_addr_r }}
 {% if on_boot.fdt_addr_r is defined %}
 fdt_addr_r={{ on_boot.fdt_addr_r }}
 {% endif %}
+{% if on_boot.boot.device.startswith('nvme') %}
+nvme scan
+{% endif %}
 {% if on_boot.boot.bootargs is defined %}
 setenv bootargs '{{ on_boot.boot.bootargs }}'
 {% else %}
